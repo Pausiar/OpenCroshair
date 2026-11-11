@@ -14,10 +14,10 @@ Visual direction for the Windows desktop application.
 
 | Preview | Description |
 |---|---|
-| [01 — Editor](01-editor.jpg) | Live crosshair preview and visual controls for size, thickness, gap, opacity, colour, outline and positioning. |
-| [02 — Dashboard](02-dashboard.jpg) | Overview of the active crosshair, recent presets, game profiles and quick actions. |
-| [03 — Preset library](03-preset-library.jpg) | Searchable grid of built-in and custom crosshair presets, with favourites and import/export actions. |
-| [04 — Game profiles](04-game-profiles.jpg) | Profiles assigned per game, with profile-level crosshair settings and position/display controls. |
+| [01 — Editor](01-editor.svg) | Live crosshair preview and visual controls for size, thickness, gap, opacity, colour, outline and positioning. |
+| [02 — Dashboard](02-dashboard.svg) | Overview of the active crosshair, recent presets, game profiles and quick actions. |
+| [03 — Preset library](03-preset-library.svg) | Searchable grid of built-in and custom crosshair presets, with favourites and import/export actions. |
+| [04 — Game profiles](04-game-profiles.svg) | Profiles assigned per game, with profile-level crosshair settings and position/display controls. |
 
 ## Suggested design tokens
 
