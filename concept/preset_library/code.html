@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-primary-container":"#e0e2ff","surface-tint":"#6366f1","surface-container-highest":"#d6d8de","on-background":"#2e3040","on-tertiary-fixed-variant":"#5b21b6","tertiary-fixed":"#ede9fe","primary-container":"#818cf8","tertiary":"#7c3aed","error-container":"#fee2e2","inverse-primary":"#a5b4fc","surface-container-lowest":"#f0f2f8","primary":"#6366f1","outline":"#8a8c9a","on-secondary-fixed":"#1a1b26","on-surface":"#2e3040","surface-dim":"#d4d6dc","surface":"#e8eaf0","secondary-fixed":"#d8dae6","primary-fixed-dim":"#a5b4fc","secondary-fixed-dim":"#b8baca","inverse-surface":"#2e3040","secondary":"#6c6e7e","on-tertiary-fixed":"#2e1065","surface-container-high":"#dcdee4","on-tertiary-container":"#3b1f63","on-surface-variant":"#585a68","on-secondary":"#ffffff","tertiary-fixed-dim":"#c4b5fd","on-secondary-fixed-variant":"#404252","inverse-on-surface":"#e8eaf0","surface-container":"#e2e4ea","on-error":"#ffffff","surface-variant":"#dcdee4","outline-variant":"#d0d2dc","on-tertiary":"#ffffff","on-secondary-container":"#585a68","on-primary-fixed":"#1e1b4b","background":"#e8eaf0","secondary-container":"#d8dae6","tertiary-container":"#a78bfa","error":"#dc2626","on-primary":"#ffffff","on-primary-fixed-variant":"#4338ca","on-error-container":"#991b1b","surface-container-low":"#e5e7ed","surface-bright":"#edeef4","primary-fixed":"#e0e2ff"},"borderRadius":{"DEFAULT":"0.5rem","lg":"1rem","xl":"1.5rem","full":"9999px"},"spacing":{},"fontFamily":{"headline":["Plus Jakarta Sans"],"display":["Plus Jakarta Sans"],"body":["Plus Jakarta Sans"],"label":["Plus Jakarta Sans"]},"fontSize":{}}}}</script></head><body class="bg-surface font-body text-on-surface antialiased select-none"><aside class="fixed left-0 top-0 h-full w-72 bg-surface z-50 flex flex-col justify-between p-6 shadow-[6px_0_16px_rgba(0,0,0,0.04)]"><div class="flex flex-col gap-6"><div class="flex items-center gap-3 px-2"><img alt="OpenCrosshair Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrArqxL6gR6ZoJwA_8SFpzh4rukhkCh__BYuu2K-u01RHoKBgr5Xgg46HOlyMiJveVaUeGsPF1CMZ3IBaU9e_RtOFjG067GM65qNz5gNti5mjrwyT-qTQaJGQQv7-0O8bIGDgUnWj12EGHMC5gwkBJkMXv3UOki0KvChfeoR9GmSDJYdPz2VgWgJwW00TL0ZikSs_MH1iG0aQ0sLfJ_yx5o-89WYV95bKuQmdlziKQA"/><div class="flex flex-col"><span class="text-base font-headline font-semibold text-on-surface tracking-tight leading-none">OpenCrosshair</span><span class="text-[11px] font-medium text-on-surface-variant mt-1 tracking-wide">v1.4.2-beta (Open Source)</span></div></div><div class="flex items-center justify-between px-3 py-2 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)]"><span class="text-xs font-medium text-on-surface-variant">Toggle Key</span><kbd class="px-2 py-0.5 rounded-lg bg-surface text-xs font-semibold text-primary shadow-[2px_2px_5px_rgba(0,0,0,0.08),-2px_-2px_5px_rgba(255,255,255,0.7)]">Ctrl+Shift+C</kbd></div><nav class="flex flex-col gap-3" data-active-classes="shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] text-primary font-semibold"><a class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.6)]" data-path="crosshair-studio" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>Crosshair Studio</span></a><a class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.6)]" data-path="overlay-settings" href="#"><span class="material-symbols-outlined text-[20px]">settings_ethernet</span><span>Overlay Settings</span></a><a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] text-primary font-semibold" data-path="preset-library" href="#"><span class="material-symbols-outlined text-[20px]">collections_bookmark</span><span>Preset Library</span></a><a class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.6)]" data-path="game-profiles" href="#"><span class="material-symbols-outlined text-[20px]">sports_esports</span><span>Game Profiles</span></a></nav></div><div class="flex flex-col gap-3 p-3 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]"><div class="flex items-center justify-between text-xs"><span class="text-on-surface-variant font-medium">Engine Render</span><span class="font-semibold text-primary">0.01ms</span></div><div class="flex items-center justify-between text-xs"><span class="text-on-surface-variant font-medium">CPU Usage</span><span class="font-semibold text-on-surface">0.2%</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/90 backdrop-blur-md z-40 px-8 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.03)]"><div class="flex items-center gap-3"><div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.05),inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="text-xs font-semibold text-on-surface">Overlay Active: Display 1</span></div></div><div class="flex items-center gap-4"><div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant px-3 py-1.5 rounded-xl bg-surface shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.7)]"><span class="material-symbols-outlined text-[16px] text-primary">speed</span><span>DirectX 12 Hook</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[3px_3px_6px_rgba(99,102,241,0.25),-3px_-3px_6px_rgba(255,255,255,0.8)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-8 pb-10"><div class="flex flex-col w-full pb-16">
+<!-- Top Control Strip & Actions -->
+<section class="flex flex-col gap-6 pt-6">
+<div class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+<div>
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-semibold tracking-wider text-primary uppercase">Official Repository</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary/60"></span>
+<span class="text-[11px] font-medium text-on-surface-variant">42,890 verified crosshairs</span>
+</div>
+<h1 class="text-2xl lg:text-3xl font-headline font-semibold text-on-surface tracking-tight mt-0.5">Reticle &amp; Preset Vault</h1>
+</div>
+<!-- Action Cluster -->
+<div class="flex items-center gap-3 w-full sm:w-auto">
+<button class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-surface text-sm font-semibold text-on-surface hover:text-primary transition-all shadow-[6px_6px_12px_rgba(0,0,0,0.08),-6px_-6px_12px_rgba(255,255,255,0.6)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.5)]" id="quick-import-toggle">
+<span class="material-symbols-outlined text-[18px] text-primary">download</span>
+<span>Import Code</span>
+</button>
+<button class="flex-1 sm:flex-initial flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-surface text-sm font-semibold text-primary transition-all shadow-[6px_6px_12px_rgba(0,0,0,0.08),-6px_-6px_12px_rgba(255,255,255,0.6)] active:shadow-[inset_4px_4px_8px_rgba(0,0,0,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.5)]">
+<span class="material-symbols-outlined text-[18px]">add_circle</span>
+<span>Create New</span>
+</button>
+</div>
+</div>
+<!-- Quick Import/Export Code Drawer Bar -->
+<div class="w-full p-4 rounded-xl bg-surface shadow-[inset_4px_4px_8px_rgba(0,0,0,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.5)] flex flex-col md:flex-row items-stretch md:items-center gap-3 transition-all duration-300" id="quick-import-drawer">
+<div class="flex items-center gap-2 text-xs font-semibold text-on-surface-variant min-w-[130px] pl-1">
+<span class="material-symbols-outlined text-[18px] text-primary">terminal</span>
+<span>Crosshair Code</span>
+</div>
+<div class="relative flex-1">
+<input class="w-full bg-surface text-xs font-mono text-on-surface px-4 py-2.5 rounded-xl shadow-[inset_3px_3px_6px_rgba(0,0,0,0.07),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] focus:outline-none placeholder:text-on-surface-variant/60" id="raw-crosshair-input" placeholder="Paste Valorant export string (0;P;c;5;o;1...), CS2 crosshaircode, or JSON..." type="text"/>
+</div>
+<div class="flex items-center gap-2">
+<button class="px-4 py-2 rounded-xl bg-surface text-xs font-semibold text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] transition-all" id="import-btn">
+          Parse &amp; Test
+        </button>
+<button class="p-2 rounded-xl bg-surface text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]" id="clipboard-paste-btn" title="Read Clipboard">
+<span class="material-symbols-outlined text-[18px]">content_paste</span>
+</button>
+</div>
+</div>
+<!-- Search and Categorization Filters -->
+<div class="flex flex-col gap-4">
+<!-- Search Input -->
+<div class="relative w-full">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 material-symbols-outlined text-[20px] text-on-surface-variant">search</span>
+<input class="w-full bg-surface pl-12 pr-28 py-3.5 rounded-xl shadow-[inset_4px_4px_8px_rgba(0,0,0,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.6)] text-sm font-medium text-on-surface focus:outline-none placeholder:text-on-surface-variant" id="preset-search" placeholder="Search presets, pro players, or game tags (e.g. TenZ, Dot, 144Hz Optimized, CS2)..." type="text"/>
+<span class="absolute right-3.5 top-1/2 -translate-y-1/2 px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.06),-2px_-2px_4px_rgba(255,255,255,0.7)]">Press /</span>
+</div>
+<!-- Filter Tags Row -->
+<div class="flex items-center gap-2.5 overflow-x-auto pb-2 scrollbar-none text-xs">
+<button class="filter-chip active-chip px-3.5 py-2 rounded-xl bg-surface font-semibold text-primary shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] whitespace-nowrap">
+          All Games
+        </button>
+<button class="filter-chip px-3.5 py-2 rounded-xl bg-surface font-medium text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.6)] whitespace-nowrap">
+          Tactical Shooters
+        </button>
+<button class="filter-chip px-3.5 py-2 rounded-xl bg-surface font-medium text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.6)] whitespace-nowrap">
+          Battle Royale
+        </button>
+<button class="filter-chip px-3.5 py-2 rounded-xl bg-surface font-medium text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.6)] whitespace-nowrap">
+          Hero FPS
+        </button>
+<button class="filter-chip px-3.5 py-2 rounded-xl bg-surface font-medium text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.6)] whitespace-nowrap">
+          Dot Only
+        </button>
+<button class="filter-chip px-3.5 py-2 rounded-xl bg-surface font-medium text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.6)] whitespace-nowrap flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-tertiary">verified</span>
+<span>Pro Player Setups</span>
+</button>
+<button class="filter-chip px-3.5 py-2 rounded-xl bg-surface font-medium text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.6)] whitespace-nowrap flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[14px] text-amber-500">star</span>
+<span>Community Rated</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Live Status Feedback Notification Banner -->
+<div class="hidden mt-4 p-3 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] flex items-center justify-between text-xs transition-all" id="live-feedback-toast">
+<div class="flex items-center gap-2.5">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+<span class="font-medium text-on-surface" id="toast-message">Preset applied to primary overlay layer.</span>
+</div>
+<span class="text-[11px] font-semibold text-primary">DirectX 12 Synced</span>
+</div>
+<!-- Cards Grid (Preset Showcase) -->
+<div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-8">
+<!-- Card 1: TenZ Precision Dot -->
+<div class="preset-card group flex flex-col justify-between p-5 rounded-2xl bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.08),-6px_-6px_14px_rgba(255,255,255,0.65)] hover:shadow-[8px_8px_18px_rgba(0,0,0,0.09),-8px_-8px_18px_rgba(255,255,255,0.7)] transition-all">
+<div class="flex flex-col gap-3.5">
+<!-- Reticle Viewport -->
+<div class="relative w-full h-44 rounded-xl bg-[#0f1118] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.7),inset_-2px_-2px_6px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+<!-- Subtle Simulated In-Game Map Grid Reticle Texture -->
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Crosshair SVG Visual: Cyan Micro Dot 2px -->
+<div class="relative z-10 transition-transform duration-200 group-hover:scale-125">
+<svg class="overflow-visible" height="64" viewbox="0 0 64 64" width="64">
+<!-- Center Dot -->
+<circle cx="32" cy="32" fill="#00ffff" r="2.5"></circle>
+<!-- Outline -->
+<circle cx="32" cy="32" fill="none" opacity="0.8" r="3.5" stroke="#000000" stroke-width="1"></circle>
+</svg>
+</div>
+<!-- Subtle Crosshair Dimension Indicators -->
+<div class="absolute bottom-2.5 left-3 text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+            DOT: 2px · OPACITY: 1.0
+          </div>
+<button class="fav-btn absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-zinc-400 hover:text-rose-400 backdrop-blur-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<!-- Info & Badges -->
+<div class="flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<h3 class="font-headline font-semibold text-base text-on-surface">TenZ Precision Dot</h3>
+<p class="text-xs text-on-surface-variant font-medium">By Tyson "TenZ" Ngo · Sentinels</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-primary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">Valorant</span>
+</div>
+<!-- Tags -->
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Pro Setup</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Micro-dot</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Headhunter</span>
+</div>
+</div>
+</div>
+<!-- Stats & Quick Actions -->
+<div class="flex flex-col gap-3 mt-4 pt-3 border-t-0">
+<div class="flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-semibold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500 fill-current" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.9</span>
+<span class="text-on-surface-variant font-normal">(1,820)</span>
+</div>
+<span class="text-xs font-medium">18.4k uses</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="apply-overlay-btn col-span-2 py-2 px-3 rounded-xl bg-surface font-semibold text-xs text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1.5 transition-all" data-code="0;P;c;5;o;1;d;1;z;2;0b;0;1b;0">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Apply Live</span>
+</button>
+<button class="copy-code-btn py-2 px-2 rounded-xl bg-surface font-medium text-xs text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1 transition-all" data-copy="0;P;c;5;o;1;d;1;z;2;0b;0;1b;0" title="Copy Raw Code">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2: S1mple CS2 Dynamic Cross -->
+<div class="preset-card group flex flex-col justify-between p-5 rounded-2xl bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.08),-6px_-6px_14px_rgba(255,255,255,0.65)] hover:shadow-[8px_8px_18px_rgba(0,0,0,0.09),-8px_-8px_18px_rgba(255,255,255,0.7)] transition-all">
+<div class="flex flex-col gap-3.5">
+<!-- Reticle Viewport -->
+<div class="relative w-full h-44 rounded-xl bg-[#0f1118] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.7),inset_-2px_-2px_6px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Crosshair SVG Visual: Neon Green Thin Cross -->
+<div class="relative z-10 transition-transform duration-200 group-hover:scale-125">
+<svg height="64" viewbox="0 0 64 64" width="64">
+<!-- Top bar -->
+<rect fill="#22c55e" height="7" stroke="#000000" stroke-width="0.8" width="2" x="31" y="20"></rect>
+<!-- Bottom bar -->
+<rect fill="#22c55e" height="7" stroke="#000000" stroke-width="0.8" width="2" x="31" y="37"></rect>
+<!-- Left bar -->
+<rect fill="#22c55e" height="2" stroke="#000000" stroke-width="0.8" width="7" x="20" y="31"></rect>
+<!-- Right bar -->
+<rect fill="#22c55e" height="2" stroke="#000000" stroke-width="0.8" width="7" x="37" y="31"></rect>
+</svg>
+</div>
+<div class="absolute bottom-2.5 left-3 text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+            GAP: -2 · LEN: 3.5 · THICK: 1
+          </div>
+<button class="fav-btn absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-zinc-400 hover:text-rose-400 backdrop-blur-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<h3 class="font-headline font-semibold text-base text-on-surface">S1mple CS2 Dynamic</h3>
+<p class="text-xs text-on-surface-variant font-medium">By Oleksandr Kostyliev · NAVI</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-primary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">CS2</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Competitive</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Tight Gap</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">High Visibility</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 pt-3 border-t-0">
+<div class="flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-semibold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500 fill-current" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.8</span>
+<span class="text-on-surface-variant font-normal">(2,410)</span>
+</div>
+<span class="text-xs font-medium">24.1k uses</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="apply-overlay-btn col-span-2 py-2 px-3 rounded-xl bg-surface font-semibold text-xs text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1.5 transition-all" data-code="CSGO-5L2Fz-99xM3-8HdfZ-A9aKa-29sGF">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Apply Live</span>
+</button>
+<button class="copy-code-btn py-2 px-2 rounded-xl bg-surface font-medium text-xs text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1 transition-all" data-copy="CSGO-5L2Fz-99xM3-8HdfZ-A9aKa-29sGF" title="Copy Raw Code">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3: Shroud Clean Plus -->
+<div class="preset-card group flex flex-col justify-between p-5 rounded-2xl bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.08),-6px_-6px_14px_rgba(255,255,255,0.65)] hover:shadow-[8px_8px_18px_rgba(0,0,0,0.09),-8px_-8px_18px_rgba(255,255,255,0.7)] transition-all">
+<div class="flex flex-col gap-3.5">
+<!-- Reticle Viewport -->
+<div class="relative w-full h-44 rounded-xl bg-[#0f1118] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.7),inset_-2px_-2px_6px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Crosshair SVG Visual: Pure White Outline Plus -->
+<div class="relative z-10 transition-transform duration-200 group-hover:scale-125">
+<svg height="64" viewbox="0 0 64 64" width="64">
+<!-- Top -->
+<rect fill="#ffffff" height="10" stroke="#000000" stroke-width="1" width="3" x="30.5" y="17"></rect>
+<!-- Bottom -->
+<rect fill="#ffffff" height="10" stroke="#000000" stroke-width="1" width="3" x="30.5" y="37"></rect>
+<!-- Left -->
+<rect fill="#ffffff" height="3" stroke="#000000" stroke-width="1" width="10" x="17" y="30.5"></rect>
+<!-- Right -->
+<rect fill="#ffffff" height="3" stroke="#000000" stroke-width="1" width="10" x="37" y="30.5"></rect>
+</svg>
+</div>
+<div class="absolute bottom-2.5 left-3 text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+            BORDER: 1.0 · CONTRAST: MAX
+          </div>
+<button class="fav-btn absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-zinc-400 hover:text-rose-400 backdrop-blur-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<h3 class="font-headline font-semibold text-base text-on-surface">Shroud Clean Plus</h3>
+<p class="text-xs text-on-surface-variant font-medium">By Michael Grzesiek · Streamer Verified</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-primary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">Apex Legends</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">High Contrast</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">All-Weather</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Outlined</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 pt-3 border-t-0">
+<div class="flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-semibold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500 fill-current" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.7</span>
+<span class="text-on-surface-variant font-normal">(980)</span>
+</div>
+<span class="text-xs font-medium">15.2k uses</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="apply-overlay-btn col-span-2 py-2 px-3 rounded-xl bg-surface font-semibold text-xs text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1.5 transition-all" data-code="0;P;c;1;o;1;f;0;0t;1;0l;5;0o;2;0a;1;0f;0;1b;0">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Apply Live</span>
+</button>
+<button class="copy-code-btn py-2 px-2 rounded-xl bg-surface font-medium text-xs text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1 transition-all" data-copy="0;P;c;1;o;1;f;0;0t;1;0l;5;0o;2;0a;1;0f;0;1b;0" title="Copy Raw Code">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4: Overwatch Hitscan Diamond -->
+<div class="preset-card group flex flex-col justify-between p-5 rounded-2xl bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.08),-6px_-6px_14px_rgba(255,255,255,0.65)] hover:shadow-[8px_8px_18px_rgba(0,0,0,0.09),-8px_-8px_18px_rgba(255,255,255,0.7)] transition-all">
+<div class="flex flex-col gap-3.5">
+<!-- Reticle Viewport -->
+<div class="relative w-full h-44 rounded-xl bg-[#0f1118] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.7),inset_-2px_-2px_6px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Crosshair SVG Visual: Violet Hollow Diamond Box -->
+<div class="relative z-10 transition-transform duration-200 group-hover:scale-125">
+<svg height="64" viewbox="0 0 64 64" width="64">
+<polygon fill="none" points="32,22 42,32 32,42 22,32" stroke="#a78bfa" stroke-width="2"></polygon>
+<circle cx="32" cy="32" fill="#ede9fe" r="1.5"></circle>
+</svg>
+</div>
+<div class="absolute bottom-2.5 left-3 text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+            SHAPE: RHOMBUS · THICK: 2px
+          </div>
+<button class="fav-btn absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-zinc-400 hover:text-rose-400 backdrop-blur-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<h3 class="font-headline font-semibold text-base text-on-surface">Hitscan Diamond</h3>
+<p class="text-xs text-on-surface-variant font-medium">By Kephrii · Widowmaker Main</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-tertiary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">Overwatch 2</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Hero FPS</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Sniper Focal</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Purple</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 pt-3 border-t-0">
+<div class="flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-semibold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500 fill-current" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.6</span>
+<span class="text-on-surface-variant font-normal">(640)</span>
+</div>
+<span class="text-xs font-medium">9.1k uses</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="apply-overlay-btn col-span-2 py-2 px-3 rounded-xl bg-surface font-semibold text-xs text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1.5 transition-all" data-code="OW2-RET-RHOMB-VIOLET-09">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Apply Live</span>
+</button>
+<button class="copy-code-btn py-2 px-2 rounded-xl bg-surface font-medium text-xs text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1 transition-all" data-copy="OW2-RET-RHOMB-VIOLET-09" title="Copy Raw Code">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 5: Rust High-Noon Circular -->
+<div class="preset-card group flex flex-col justify-between p-5 rounded-2xl bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.08),-6px_-6px_14px_rgba(255,255,255,0.65)] hover:shadow-[8px_8px_18px_rgba(0,0,0,0.09),-8px_-8px_18px_rgba(255,255,255,0.7)] transition-all">
+<div class="flex flex-col gap-3.5">
+<!-- Reticle Viewport -->
+<div class="relative w-full h-44 rounded-xl bg-[#0f1118] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.7),inset_-2px_-2px_6px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Crosshair SVG Visual: Amber Ring with Center Pin -->
+<div class="relative z-10 transition-transform duration-200 group-hover:scale-125">
+<svg height="64" viewbox="0 0 64 64" width="64">
+<!-- Outer Circle Ring -->
+<circle cx="32" cy="32" fill="none" r="10" stroke="#f59e0b" stroke-dasharray="4 2" stroke-width="1.7"></circle>
+<!-- Center Pin Dot -->
+<circle cx="32" cy="32" fill="#fef3c7" r="1.5"></circle>
+</svg>
+</div>
+<div class="absolute bottom-2.5 left-3 text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+            RAD: 10px · DASH: 4-2 · AMBER
+          </div>
+<button class="fav-btn absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-zinc-400 hover:text-rose-400 backdrop-blur-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<h3 class="font-headline font-semibold text-base text-on-surface">High-Noon Circular</h3>
+<p class="text-xs text-on-surface-variant font-medium">By Posty · Survival Specialist</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-amber-600 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">Rust</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Hipfire Boost</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Circular Ring</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Warm Amber</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 pt-3 border-t-0">
+<div class="flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-semibold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500 fill-current" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.9</span>
+<span class="text-on-surface-variant font-normal">(1,120)</span>
+</div>
+<span class="text-xs font-medium">11.8k uses</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="apply-overlay-btn col-span-2 py-2 px-3 rounded-xl bg-surface font-semibold text-xs text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1.5 transition-all" data-code="RUST-RING-AMBER-4DASH-CENTER">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Apply Live</span>
+</button>
+<button class="copy-code-btn py-2 px-2 rounded-xl bg-surface font-medium text-xs text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1 transition-all" data-copy="RUST-RING-AMBER-4DASH-CENTER" title="Copy Raw Code">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Card 6: Snip3r Chevron Mark -->
+<div class="preset-card group flex flex-col justify-between p-5 rounded-2xl bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.08),-6px_-6px_14px_rgba(255,255,255,0.65)] hover:shadow-[8px_8px_18px_rgba(0,0,0,0.09),-8px_-8px_18px_rgba(255,255,255,0.7)] transition-all">
+<div class="flex flex-col gap-3.5">
+<!-- Reticle Viewport -->
+<div class="relative w-full h-44 rounded-xl bg-[#0f1118] shadow-[inset_4px_4px_10px_rgba(0,0,0,0.7),inset_-2px_-2px_6px_rgba(255,255,255,0.05)] overflow-hidden flex items-center justify-center">
+<div class="absolute inset-0 opacity-20 pointer-events-none" style="background-image: radial-gradient(rgba(255,255,255,0.18) 1px, transparent 1px); background-size: 16px 16px;"></div>
+<!-- Crosshair SVG Visual: Inverted Chevron Mark -->
+<div class="relative z-10 transition-transform duration-200 group-hover:scale-125">
+<svg height="64" viewbox="0 0 64 64" width="64">
+<!-- Inverted Red Chevron Pointing Up -->
+<path d="M22 36 L32 26 L42 36" fill="none" stroke="#ef4444" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path>
+<!-- Sub drop dot -->
+<circle cx="32" cy="40" fill="#ef4444" r="1.2"></circle>
+</svg>
+</div>
+<div class="absolute bottom-2.5 left-3 text-[10px] font-mono text-zinc-400 bg-black/40 px-2 py-0.5 rounded backdrop-blur-sm">
+            ANGLE: 90° · ELEVATION PIN · RED
+          </div>
+<button class="fav-btn absolute top-2.5 right-2.5 p-1.5 rounded-lg bg-black/40 hover:bg-black/60 text-zinc-400 hover:text-rose-400 backdrop-blur-sm transition-colors">
+<span class="material-symbols-outlined text-[18px]">favorite</span>
+</button>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-start justify-between gap-2">
+<div>
+<h3 class="font-headline font-semibold text-base text-on-surface">Snip3r Chevron Mark</h3>
+<p class="text-xs text-on-surface-variant font-medium">By TacticalDMR · Halo Infinite / Tarkov</p>
+</div>
+<span class="px-2.5 py-1 rounded-lg bg-surface text-[10px] font-semibold text-red-500 shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">DMR / Sniper</span>
+</div>
+<div class="flex flex-wrap gap-1.5 mt-1">
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Chevron</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Zero Obstruction</span>
+<span class="px-2 py-0.5 rounded-md bg-surface text-[10px] font-medium text-on-surface-variant shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.6)]">Bullet Drop</span>
+</div>
+</div>
+</div>
+<div class="flex flex-col gap-3 mt-4 pt-3 border-t-0">
+<div class="flex items-center justify-between text-xs text-on-surface-variant">
+<div class="flex items-center gap-1 font-semibold text-on-surface">
+<span class="material-symbols-outlined text-[15px] text-amber-500 fill-current" style="font-variation-settings: 'FILL' 1;">star</span>
+<span>4.7</span>
+<span class="text-on-surface-variant font-normal">(430)</span>
+</div>
+<span class="text-xs font-medium">7.9k uses</span>
+</div>
+<div class="grid grid-cols-3 gap-2">
+<button class="apply-overlay-btn col-span-2 py-2 px-3 rounded-xl bg-surface font-semibold text-xs text-primary shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1.5 transition-all" data-code="MIL-CHEVRON-RED-90DEG-INVERT">
+<span class="material-symbols-outlined text-[16px]">visibility</span>
+<span>Apply Live</span>
+</button>
+<button class="copy-code-btn py-2 px-2 rounded-xl bg-surface font-medium text-xs text-on-surface-variant hover:text-on-surface shadow-[4px_4px_8px_rgba(0,0,0,0.07),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] flex items-center justify-center gap-1 transition-all" data-copy="MIL-CHEVRON-RED-90DEG-INVERT" title="Copy Raw Code">
+<span class="material-symbols-outlined text-[16px]">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+<!-- Pagination, Quick Sync & Cloud State Footer -->
+<section class="mt-12 flex flex-col sm:flex-row items-center justify-between gap-4 p-5 rounded-2xl bg-surface shadow-[inset_4px_4px_8px_rgba(0,0,0,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.5)]">
+<!-- Cloud Status Indicator -->
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-xl bg-surface flex items-center justify-center shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] text-primary">
+<span class="material-symbols-outlined text-[18px]">cloud_done</span>
+</div>
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">Cloud Preset Sync: Active</span>
+<span class="text-[11px] font-medium text-on-surface-variant">Last synced with GitHub Community Registry 2m ago</span>
+</div>
+</div>
+<!-- Soft Tactile Pagination -->
+<div class="flex items-center gap-2">
+<button class="p-2 rounded-xl bg-surface text-on-surface-variant hover:text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] transition-all" title="Previous Page">
+<span class="material-symbols-outlined text-[18px]">chevron_left</span>
+</button>
+<div class="flex items-center gap-1.5 px-2">
+<button class="w-8 h-8 rounded-xl bg-surface text-xs font-semibold text-primary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.07),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]">1</button>
+<button class="w-8 h-8 rounded-xl bg-surface text-xs font-medium text-on-surface-variant hover:text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.05),-3px_-3px_6px_rgba(255,255,255,0.7)]">2</button>
+<button class="w-8 h-8 rounded-xl bg-surface text-xs font-medium text-on-surface-variant hover:text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.05),-3px_-3px_6px_rgba(255,255,255,0.7)]">3</button>
+<span class="text-xs text-on-surface-variant px-1 font-semibold">...</span>
+<button class="w-8 h-8 rounded-xl bg-surface text-xs font-medium text-on-surface-variant hover:text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.05),-3px_-3px_6px_rgba(255,255,255,0.7)]">42</button>
+</div>
+<button class="p-2 rounded-xl bg-surface text-on-surface-variant hover:text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] transition-all" title="Next Page">
+<span class="material-symbols-outlined text-[18px]">chevron_right</span>
+</button>
+</div>
+</section>
+</div>
+<script>
+  // Filter chips interactive toggling
+  const chips = document.querySelectorAll('.filter-chip');
+  chips.forEach(chip => {
+    chip.addEventListener('click', () => {
+      chips.forEach(c => {
+        c.classList.remove('font-semibold', 'text-primary');
+        c.classList.add('font-medium', 'text-on-surface-variant');
+        c.style.boxShadow = '4px 4px 8px rgba(0,0,0,0.06), -4px -4px 8px rgba(255,255,255,0.6)';
+      });
+      chip.classList.add('font-semibold', 'text-primary');
+      chip.classList.remove('font-medium', 'text-on-surface-variant');
+      chip.style.boxShadow = 'inset 3px 3px 6px rgba(0,0,0,0.06), inset -3px -3px 6px rgba(255,255,255,0.6)';
+    });
+  });
+
+  // Apply Live action feedback
+  const toast = document.getElementById('live-feedback-toast');
+  const toastMsg = document.getElementById('toast-message');
+  let toastTimer;
+
+  function showToast(message) {
+    if (toastTimer) clearTimeout(toastTimer);
+    toastMsg.textContent = message;
+    toast.classList.remove('hidden');
+    toastTimer = setTimeout(() => {
+      toast.classList.add('hidden');
+    }, 3200);
+  }
+
+  document.querySelectorAll('.apply-overlay-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const card = e.currentTarget.closest('.preset-card');
+      const title = card ? card.querySelector('h3').textContent : 'Reticle';
+      showToast(`Hooked & loaded "${title}" directly into DirectX/Vulkan stream.`);
+    });
+  });
+
+  // Copy code feedback
+  document.querySelectorAll('.copy-code-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      const code = e.currentTarget.getAttribute('data-copy');
+      if (navigator.clipboard && code) {
+        navigator.clipboard.writeText(code);
+      }
+      showToast(`Crosshair profile copied to clipboard!`);
+    });
+  });
+
+  // Favorite toggle
+  document.querySelectorAll('.fav-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const icon = btn.querySelector('.material-symbols-outlined');
+      if (icon.classList.contains('text-rose-500')) {
+        icon.classList.remove('text-rose-500');
+        icon.classList.add('text-zinc-400');
+        icon.style.fontVariationSettings = "'FILL' 0";
+      } else {
+        icon.classList.add('text-rose-500');
+        icon.classList.remove('text-zinc-400');
+        icon.style.fontVariationSettings = "'FILL' 1";
+        showToast('Saved reticle to your Offline Favorites vault.');
+      }
+    });
+  });
+
+  // Import drawer actions
+  const importBtn = document.getElementById('import-btn');
+  const rawInput = document.getElementById('raw-crosshair-input');
+  if (importBtn && rawInput) {
+    importBtn.addEventListener('click', () => {
+      const val = rawInput.value.trim();
+      if (val) {
+        showToast(`Validated & injected crosshair configuration (${val.slice(0, 14)}...).`);
+        rawInput.value = '';
+      } else {
+        showToast('Please paste a valid Valorant, CS2, or OpenCrosshair code string.');
+      }
+    });
+  }
+
+  const clipBtn = document.getElementById('clipboard-paste-btn');
+  if (clipBtn && rawInput) {
+    clipBtn.addEventListener('click', async () => {
+      try {
+        const text = await navigator.clipboard.readText();
+        rawInput.value = text;
+        showToast('Pasted string from system clipboard.');
+      } catch (err) {
+        rawInput.focus();
+      }
+    });
+  }
+</script></main></div></body></html>

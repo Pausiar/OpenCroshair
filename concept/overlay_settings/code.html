@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={"darkMode":"class","theme":{"extend":{"colors":{"on-primary-container":"#e0e2ff","surface-tint":"#6366f1","surface-container-highest":"#d6d8de","on-background":"#2e3040","on-tertiary-fixed-variant":"#5b21b6","tertiary-fixed":"#ede9fe","primary-container":"#818cf8","tertiary":"#7c3aed","error-container":"#fee2e2","inverse-primary":"#a5b4fc","surface-container-lowest":"#f0f2f8","primary":"#6366f1","outline":"#8a8c9a","on-secondary-fixed":"#1a1b26","on-surface":"#2e3040","surface-dim":"#d4d6dc","surface":"#e8eaf0","secondary-fixed":"#d8dae6","primary-fixed-dim":"#a5b4fc","secondary-fixed-dim":"#b8baca","inverse-surface":"#2e3040","secondary":"#6c6e7e","on-tertiary-fixed":"#2e1065","surface-container-high":"#dcdee4","on-tertiary-container":"#3b1f63","on-surface-variant":"#585a68","on-secondary":"#ffffff","tertiary-fixed-dim":"#c4b5fd","on-secondary-fixed-variant":"#404252","inverse-on-surface":"#e8eaf0","surface-container":"#e2e4ea","on-error":"#ffffff","surface-variant":"#dcdee4","outline-variant":"#d0d2dc","on-tertiary":"#ffffff","on-secondary-container":"#585a68","on-primary-fixed":"#1e1b4b","background":"#e8eaf0","secondary-container":"#d8dae6","tertiary-container":"#a78bfa","error":"#dc2626","on-primary":"#ffffff","on-primary-fixed-variant":"#4338ca","on-error-container":"#991b1b","surface-container-low":"#e5e7ed","surface-bright":"#edeef4","primary-fixed":"#e0e2ff"},"borderRadius":{"DEFAULT":"0.5rem","lg":"1rem","xl":"1.5rem","full":"9999px"},"spacing":{},"fontFamily":{"headline":["Plus Jakarta Sans"],"display":["Plus Jakarta Sans"],"body":["Plus Jakarta Sans"],"label":["Plus Jakarta Sans"]},"fontSize":{}}}}</script></head><body class="bg-surface font-body text-on-surface antialiased select-none"><aside class="fixed left-0 top-0 h-full w-72 bg-surface z-50 flex flex-col justify-between p-6 shadow-[6px_0_16px_rgba(0,0,0,0.04)]"><div class="flex flex-col gap-6"><div class="flex items-center gap-3 px-2"><img alt="OpenCrosshair Logo" class="h-8 w-auto object-contain" src="https://lh3.googleusercontent.com/aida/ALJJyrArqxL6gR6ZoJwA_8SFpzh4rukhkCh__BYuu2K-u01RHoKBgr5Xgg46HOlyMiJveVaUeGsPF1CMZ3IBaU9e_RtOFjG067GM65qNz5gNti5mjrwyT-qTQaJGQQv7-0O8bIGDgUnWj12EGHMC5gwkBJkMXv3UOki0KvChfeoR9GmSDJYdPz2VgWgJwW00TL0ZikSs_MH1iG0aQ0sLfJ_yx5o-89WYV95bKuQmdlziKQA"/><div class="flex flex-col"><span class="text-base font-headline font-semibold text-on-surface tracking-tight leading-none">OpenCrosshair</span><span class="text-[11px] font-medium text-on-surface-variant mt-1 tracking-wide">v1.4.2-beta (Open Source)</span></div></div><div class="flex items-center justify-between px-3 py-2 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)]"><span class="text-xs font-medium text-on-surface-variant">Toggle Key</span><kbd class="px-2 py-0.5 rounded-lg bg-surface text-xs font-semibold text-primary shadow-[2px_2px_5px_rgba(0,0,0,0.08),-2px_-2px_5px_rgba(255,255,255,0.7)]">Ctrl+Shift+C</kbd></div><nav class="flex flex-col gap-3" data-active-classes="shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] text-primary font-semibold"><a class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.6)]" data-path="crosshair-studio" href="#"><span class="material-symbols-outlined text-[20px]">tune</span><span>Crosshair Studio</span></a><a aria-current="page" class="flex items-center gap-3 px-4 py-3 rounded-xl transition-all shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] text-primary font-semibold" data-path="overlay-settings" href="#"><span class="material-symbols-outlined text-[20px]">settings_ethernet</span><span>Overlay Settings</span></a><a class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.6)]" data-path="preset-library" href="#"><span class="material-symbols-outlined text-[20px]">collections_bookmark</span><span>Preset Library</span></a><a class="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-on-surface-variant hover:text-on-surface transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.6)]" data-path="game-profiles" href="#"><span class="material-symbols-outlined text-[20px]">sports_esports</span><span>Game Profiles</span></a></nav></div><div class="flex flex-col gap-3 p-3 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]"><div class="flex items-center justify-between text-xs"><span class="text-on-surface-variant font-medium">Engine Render</span><span class="font-semibold text-primary">0.01ms</span></div><div class="flex items-center justify-between text-xs"><span class="text-on-surface-variant font-medium">CPU Usage</span><span class="font-semibold text-on-surface">0.2%</span></div></div></aside><div class="pl-72"><header class="fixed top-0 left-72 right-0 h-16 bg-surface/90 backdrop-blur-md z-40 px-8 flex items-center justify-between shadow-[0_4px_12px_rgba(0,0,0,0.03)]"><div class="flex items-center gap-3"><div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.05),inset_-2px_-2px_5px_rgba(255,255,255,0.7)]"><span class="w-2.5 h-2.5 rounded-full bg-primary animate-pulse"></span><span class="text-xs font-semibold text-on-surface">Overlay Active: Display 1</span></div></div><div class="flex items-center gap-4"><div class="flex items-center gap-2 text-xs font-medium text-on-surface-variant px-3 py-1.5 rounded-xl bg-surface shadow-[4px_4px_8px_rgba(0,0,0,0.05),-4px_-4px_8px_rgba(255,255,255,0.7)]"><span class="material-symbols-outlined text-[16px] text-primary">speed</span><span>DirectX 12 Hook</span></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-[3px_3px_6px_rgba(99,102,241,0.25),-3px_-3px_6px_rgba(255,255,255,0.8)]"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="w-full pt-16 bg-surface min-h-screen px-8 pb-10"><div class="flex flex-col w-full gap-8">
+<!-- Top Engine Status Banner -->
+<section class="rounded-xl p-6 bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.06),-6px_-6px_14px_rgba(255,255,255,0.7)] flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+<div class="flex items-start sm:items-center gap-4">
+<div class="w-14 h-14 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] flex items-center justify-center flex-shrink-0">
+<span class="material-symbols-outlined text-primary text-[28px]">memory</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-3 flex-wrap">
+<h1 class="text-lg font-headline font-semibold text-on-surface">DirectX 12 / Vulkan Overlay Core</h1>
+<span class="px-2.5 py-0.5 rounded-full text-[11px] font-semibold tracking-wide bg-surface text-primary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] flex items-center gap-1.5">
+<span class="w-2 h-2 rounded-full bg-primary animate-ping"></span>
+            ACTIVE &amp; TRANSPARENT
+          </span>
+</div>
+<p class="text-xs text-on-surface-variant mt-1">Windows Desktop Duplication API (DDA) • 0.00ms Ingestion Overhead • Zero-Lag Frame Composition</p>
+</div>
+</div>
+<div class="flex items-center gap-4 flex-wrap">
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.05),inset_-3px_-3px_6px_rgba(255,255,255,0.6)]">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider">Hook Type</span>
+<span class="text-xs font-semibold text-on-surface">HWND Topmost Alpha</span>
+</div>
+</div>
+<div class="flex items-center gap-3 px-4 py-2.5 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.05),inset_-3px_-3px_6px_rgba(255,255,255,0.6)]">
+<span class="material-symbols-outlined text-tertiary text-[18px]">bolt</span>
+<div class="flex flex-col">
+<span class="text-[10px] uppercase font-semibold text-on-surface-variant tracking-wider">Input Latency</span>
+<span class="text-xs font-semibold text-tertiary">0.02 ms Raw Pass</span>
+</div>
+</div>
+<button class="px-4 py-2.5 rounded-xl bg-surface text-xs font-semibold text-on-surface hover:text-primary transition-all shadow-[4px_4px_8px_rgba(0,0,0,0.06),-4px_-4px_8px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center gap-2" id="engine-restart-btn">
+<span class="material-symbols-outlined text-[16px]">sync</span>
+<span>Rehook Pipeline</span>
+</button>
+</div>
+</section>
+<!-- Main Grid Layout -->
+<div class="grid grid-cols-1 xl:grid-cols-12 gap-8 items-start">
+<!-- Left Column: Display & Mode Engine (7 cols) -->
+<div class="xl:col-span-7 flex flex-col gap-8">
+<!-- Card: Display & Output Configuration -->
+<section class="rounded-xl p-6 bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.06),-6px_-6px_14px_rgba(255,255,255,0.7)] flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[22px]">desktop_windows</span>
+<h2 class="text-base font-headline font-semibold text-on-surface">Target Display &amp; Surface Pipeline</h2>
+</div>
+<span class="text-[11px] font-medium text-on-surface-variant">EDID Direct Handshake</span>
+</div>
+<!-- Target Monitor Selector -->
+<div class="flex flex-col gap-2">
+<label class="text-xs font-medium text-on-surface-variant flex items-center justify-between">
+<span>Primary Rendering Canvas (Display Target)</span>
+<span class="text-[11px] text-primary font-semibold">240.00 Hz Locked</span>
+</label>
+<div class="relative">
+<select class="w-full px-4 py-3 rounded-xl bg-surface text-sm font-semibold text-on-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] appearance-none outline-none cursor-pointer focus:text-primary transition-all" id="monitor-select">
+<option selected="" value="1">Display 1: 2560x1440 @ 240Hz (ROG Swift OLED PG27AQDM - Primary)</option>
+<option value="2">Display 2: 1920x1080 @ 144Hz (Zowie XL2411P - Secondary)</option>
+<option value="3">Virtual Desktop: 3840x2160 @ 120Hz (NVIDIA DSR Canvas)</option>
+</select>
+<span class="material-symbols-outlined absolute right-4 top-1/2 -translate-y-1/2 text-on-surface-variant pointer-events-none text-[20px]">expand_more</span>
+</div>
+</div>
+<!-- Game Window Mode Guide Callout -->
+<div class="rounded-xl p-4 bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.04),inset_-3px_-3px_6px_rgba(255,255,255,0.5)] flex flex-col gap-3">
+<div class="flex items-center gap-2 text-xs font-semibold text-on-surface">
+<span class="material-symbols-outlined text-primary text-[18px]">info</span>
+<span>Game Window Mode Compatibility</span>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+<div class="p-3 rounded-lg bg-surface shadow-[2px_2px_5px_rgba(0,0,0,0.04),-2px_-2px_5px_rgba(255,255,255,0.6)] flex flex-col gap-1">
+<div class="flex items-center gap-1.5 text-primary font-semibold">
+<span class="material-symbols-outlined text-[16px]">check_circle</span>
+<span>Borderless Windowed</span>
+</div>
+<p class="text-on-surface-variant text-[11px] leading-relaxed">Recommended. Overlay draws instantly above DWM composition surface with identical latency.</p>
+</div>
+<div class="p-3 rounded-lg bg-surface shadow-[2px_2px_5px_rgba(0,0,0,0.04),-2px_-2px_5px_rgba(255,255,255,0.6)] flex flex-col gap-1">
+<div class="flex items-center gap-1.5 text-on-surface font-semibold">
+<span class="material-symbols-outlined text-tertiary text-[16px]">tips_and_updates</span>
+<span>Fullscreen Exclusive</span>
+</div>
+<p class="text-on-surface-variant text-[11px] leading-relaxed">DirectX overlay automatically swaps to hardware desktop plane to bypass graphic exclusive locks.</p>
+</div>
+</div>
+</div>
+<!-- Switches & Controls Grid -->
+<div class="flex flex-col gap-4">
+<!-- Toggle: Click-Through Transparency -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col pr-4">
+<span class="text-xs font-semibold text-on-surface">Click-Through Transparency (WS_EX_TRANSPARENT)</span>
+<span class="text-[11px] text-on-surface-variant">Prevents the overlay from capturing cursor clicks or polling focus from game windows.</span>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] p-0.5 relative transition-all cursor-pointer flex-shrink-0" id="toggle-clickthrough" role="switch">
+<span class="toggle-thumb block w-5 h-5 rounded-full bg-primary shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.8)] transform translate-x-6 transition-transform"></span>
+</button>
+</div>
+<!-- Toggle: Hardware Acceleration -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col pr-4">
+<span class="text-xs font-semibold text-on-surface">DirectWrite GPU Acceleration</span>
+<span class="text-[11px] text-on-surface-variant">Offloads crosshair vector anti-aliasing to dedicated GPU cores for 0.01% CPU consumption.</span>
+</div>
+<button aria-checked="true" class="w-12 h-6 rounded-full bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] p-0.5 relative transition-all cursor-pointer flex-shrink-0" id="toggle-hwaccel" role="switch">
+<span class="toggle-thumb block w-5 h-5 rounded-full bg-primary shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.8)] transform translate-x-6 transition-transform"></span>
+</button>
+</div>
+<!-- Toggle: V-Sync Overlay Sync -->
+<div class="flex items-center justify-between p-3.5 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col pr-4">
+<span class="text-xs font-semibold text-on-surface">Vertical Sync (V-Sync Overlay Lock)</span>
+<span class="text-[11px] text-on-surface-variant">Syncs crosshair presentation to physical monitor blanking intervals. Disable for raw render.</span>
+</div>
+<button aria-checked="false" class="w-12 h-6 rounded-full bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.7)] p-0.5 relative transition-all cursor-pointer flex-shrink-0" id="toggle-vsync" role="switch">
+<span class="toggle-thumb block w-5 h-5 rounded-full bg-secondary shadow-[2px_2px_4px_rgba(0,0,0,0.15),-1px_-1px_3px_rgba(255,255,255,0.8)] transform translate-x-0 transition-transform"></span>
+</button>
+</div>
+</div>
+<!-- Framerate Cap Segmented Selector -->
+<div class="flex flex-col gap-2 pt-2">
+<span class="text-xs font-medium text-on-surface-variant">Maximum Overlay Refresh Cap</span>
+<div class="grid grid-cols-3 gap-3 p-1 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.06),inset_-3px_-3px_6px_rgba(255,255,255,0.6)]">
+<button class="fps-btn py-2 text-xs font-semibold rounded-lg bg-surface text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] transition-all" data-fps="unlocked">Unlocked</button>
+<button class="fps-btn py-2 text-xs font-semibold rounded-lg bg-surface text-primary shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)] transition-all" data-fps="240">240 FPS</button>
+<button class="fps-btn py-2 text-xs font-semibold rounded-lg bg-surface text-on-surface shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] transition-all" data-fps="360">360 FPS</button>
+</div>
+</div>
+</section>
+<!-- Anti-Cheat & Security Assurance Badge Card -->
+<section class="rounded-xl p-6 bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.06),-6px_-6px_14px_rgba(255,255,255,0.7)] flex flex-col gap-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-full bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.06),inset_-2px_-2px_5px_rgba(255,255,255,0.7)] flex items-center justify-center">
+<span class="material-symbols-outlined text-primary text-[22px]">shield</span>
+</div>
+<div class="flex flex-col">
+<div class="flex items-center gap-2">
+<h2 class="text-sm font-headline font-semibold text-on-surface">Pure Windows Top-Level Overlay</h2>
+<span class="px-2 py-0.5 rounded text-[10px] font-bold bg-surface text-primary shadow-[2px_2px_4px_rgba(0,0,0,0.05),-2px_-2px_4px_rgba(255,255,255,0.7)]">100% KERNEL SAFE</span>
+</div>
+<span class="text-xs text-on-surface-variant">Strict non-intrusive architecture guarantee</span>
+</div>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+          OpenCrosshair runs strictly as an isolated, unprivileged desktop composited window (<code class="px-1.5 py-0.5 rounded bg-surface shadow-[inset_1px_1px_3px_rgba(0,0,0,0.05),inset_-1px_-1px_3px_rgba(255,255,255,0.6)] text-primary font-mono text-[11px]">Layered Transparent Window</code>). It contains zero game memory hooks, performs no DLL injection, and reads no process memory. Verified compliant with Riot Vanguard, Valve Anti-Cheat (VAC), Easy Anti-Cheat (EAC), and BattlEye.
+        </p>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1">
+<div class="p-2.5 rounded-lg bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.04),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center gap-1.5 text-[11px] font-semibold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>VAC Verified</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.04),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center gap-1.5 text-[11px] font-semibold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>Vanguard Safe</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.04),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center gap-1.5 text-[11px] font-semibold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>EAC Clean</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface shadow-[inset_2px_2px_4px_rgba(0,0,0,0.04),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center gap-1.5 text-[11px] font-semibold text-on-surface">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>BattlEye Pass</span>
+</div>
+</div>
+</section>
+</div>
+<!-- Right Column: Micro-Alignment & Hotkeys (5 cols) -->
+<div class="xl:col-span-5 flex flex-col gap-8">
+<!-- Card: Precision Micro-Alignment & Calibration -->
+<section class="rounded-xl p-6 bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.06),-6px_-6px_14px_rgba(255,255,255,0.7)] flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[22px]">control_camera</span>
+<h2 class="text-base font-headline font-semibold text-on-surface">Precision Micro-Alignment</h2>
+</div>
+<span class="text-[11px] font-semibold text-primary">Subpixel Mode: ON</span>
+</div>
+<!-- Crosshair Preview and Coordinate Reticle -->
+<div class="relative w-full h-44 rounded-xl bg-surface shadow-[inset_4px_4px_8px_rgba(0,0,0,0.06),inset_-4px_-4px_8px_rgba(255,255,255,0.6)] flex items-center justify-center overflow-hidden">
+<!-- Crosshair coordinate grid lines -->
+<div class="absolute inset-0 flex items-center justify-center pointer-events-none opacity-25">
+<div class="w-full h-[1px] bg-outline"></div>
+<div class="h-full w-[1px] bg-outline absolute"></div>
+</div>
+<div class="absolute w-24 h-24 rounded-full shadow-[inset_2px_2px_5px_rgba(0,0,0,0.05),inset_-2px_-2px_5px_rgba(255,255,255,0.5)] pointer-events-none"></div>
+<!-- Active Crosshair Element (Subpixel preview) -->
+<div class="relative z-10 transition-transform duration-75 flex items-center justify-center" id="crosshair-reticle">
+<!-- Center Dot -->
+<div class="w-1.5 h-1.5 rounded-full bg-primary shadow-[0_0_8px_rgba(99,102,241,0.8)]"></div>
+<!-- Crosshair Spokes -->
+<div class="absolute w-5 h-0.5 bg-primary -left-6 rounded-sm"></div>
+<div class="absolute w-5 h-0.5 bg-primary -right-6 rounded-sm"></div>
+<div class="absolute h-5 w-0.5 bg-primary -top-6 rounded-sm"></div>
+<div class="absolute h-5 w-0.5 bg-primary -bottom-6 rounded-sm"></div>
+</div>
+<div class="absolute bottom-2 right-3 text-[10px] font-mono text-on-surface-variant">
+            Target: 1280.00 x 720.00
+          </div>
+</div>
+<!-- D-Pad & Numeric Nudge Controls -->
+<div class="flex flex-col sm:flex-row items-center gap-6 justify-between">
+<!-- Tactile D-Pad -->
+<div class="grid grid-cols-3 gap-2 w-36 h-36 p-2 rounded-xl bg-surface shadow-[inset_3px_3px_6px_rgba(0,0,0,0.05),inset_-3px_-3px_6px_rgba(255,255,255,0.6)] items-center justify-items-center">
+<div></div>
+<button class="w-9 h-9 rounded-lg bg-surface text-on-surface hover:text-primary shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center transition-all" id="nudge-up">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_up</span>
+</button>
+<div></div>
+<button class="w-9 h-9 rounded-lg bg-surface text-on-surface hover:text-primary shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center transition-all" id="nudge-left">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_left</span>
+</button>
+<button class="w-9 h-9 rounded-lg bg-surface text-primary shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center transition-all" id="snap-center" title="Auto-Snap to Center">
+<span class="material-symbols-outlined text-[18px]">filter_center_focus</span>
+</button>
+<button class="w-9 h-9 rounded-lg bg-surface text-on-surface hover:text-primary shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center transition-all" id="nudge-right">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_right</span>
+</button>
+<div></div>
+<button class="w-9 h-9 rounded-lg bg-surface text-on-surface hover:text-primary shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.08),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center transition-all" id="nudge-down">
+<span class="material-symbols-outlined text-[18px]">keyboard_arrow_down</span>
+</button>
+<div></div>
+</div>
+<!-- Numeric Pixel Inputs -->
+<div class="flex flex-col gap-3 flex-1 w-full">
+<div class="flex items-center justify-between gap-3">
+<label class="text-xs font-medium text-on-surface-variant">Offset X Axis</label>
+<div class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.06),inset_-2px_-2px_5px_rgba(255,255,255,0.6)]">
+<input class="w-14 bg-transparent text-right text-xs font-semibold text-on-surface outline-none" id="input-x" type="number" value="0"/>
+<span class="text-[11px] text-on-surface-variant font-mono">px</span>
+</div>
+</div>
+<div class="flex items-center justify-between gap-3">
+<label class="text-xs font-medium text-on-surface-variant">Offset Y Axis</label>
+<div class="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.06),inset_-2px_-2px_5px_rgba(255,255,255,0.6)]">
+<input class="w-14 bg-transparent text-right text-xs font-semibold text-on-surface outline-none" id="input-y" type="number" value="0"/>
+<span class="text-[11px] text-on-surface-variant font-mono">px</span>
+</div>
+</div>
+<button class="w-full mt-1 py-2 px-3 rounded-xl bg-surface text-xs font-semibold text-on-surface hover:text-primary transition-all shadow-[3px_3px_7px_rgba(0,0,0,0.05),-3px_-3px_7px_rgba(255,255,255,0.7)] active:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] flex items-center justify-center gap-2" id="calibrate-multimonitor">
+<span class="material-symbols-outlined text-[16px]">aspect_ratio</span>
+<span>Multi-Monitor Alignment Tool</span>
+</button>
+</div>
+</div>
+</section>
+<!-- Card: Hotkey & Keybinding Manager -->
+<section class="rounded-xl p-6 bg-surface shadow-[6px_6px_14px_rgba(0,0,0,0.06),-6px_-6px_14px_rgba(255,255,255,0.7)] flex flex-col gap-6">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-primary text-[22px]">keyboard</span>
+<h2 class="text-base font-headline font-semibold text-on-surface">Global Shortcuts &amp; Binds</h2>
+</div>
+<span class="text-[11px] font-medium text-on-surface-variant">Low-Level Keyboard Hook</span>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Binding 1: Global Overlay Toggle -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">Global Overlay Toggle</span>
+<span class="text-[10px] text-on-surface-variant">Instant hide / show reticle</span>
+</div>
+<kbd class="px-2.5 py-1 rounded-lg bg-surface text-xs font-semibold text-primary shadow-[2px_2px_5px_rgba(0,0,0,0.08),-2px_-2px_5px_rgba(255,255,255,0.7)] cursor-pointer hover:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] transition-all">Ctrl + Shift + C</kbd>
+</div>
+<!-- Binding 2: Cycle Next Preset -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">Cycle Next Preset</span>
+<span class="text-[10px] text-on-surface-variant">Load next profile in current bank</span>
+</div>
+<kbd class="px-2.5 py-1 rounded-lg bg-surface text-xs font-semibold text-primary shadow-[2px_2px_5px_rgba(0,0,0,0.08),-2px_-2px_5px_rgba(255,255,255,0.7)] cursor-pointer hover:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] transition-all">Ctrl + Shift + Right</kbd>
+</div>
+<!-- Binding 3: Temporary Hide (Hold key) -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">Temporary Hide (Hold)</span>
+<span class="text-[10px] text-on-surface-variant">Suppresses draw while scoping</span>
+</div>
+<kbd class="px-2.5 py-1 rounded-lg bg-surface text-xs font-semibold text-primary shadow-[2px_2px_5px_rgba(0,0,0,0.08),-2px_-2px_5px_rgba(255,255,255,0.7)] cursor-pointer hover:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] transition-all">Alt + Z</kbd>
+</div>
+<!-- Binding 4: Recalibrate Center -->
+<div class="flex items-center justify-between p-3 rounded-xl bg-surface shadow-[inset_2px_2px_5px_rgba(0,0,0,0.04),inset_-2px_-2px_5px_rgba(255,255,255,0.5)]">
+<div class="flex flex-col">
+<span class="text-xs font-semibold text-on-surface">Recalibrate Center</span>
+<span class="text-[10px] text-on-surface-variant">Re-query active focused monitor</span>
+</div>
+<kbd class="px-2.5 py-1 rounded-lg bg-surface text-xs font-semibold text-primary shadow-[2px_2px_5px_rgba(0,0,0,0.08),-2px_-2px_5px_rgba(255,255,255,0.7)] cursor-pointer hover:shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.5)] transition-all">Ctrl + Alt + K</kbd>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1 text-xs">
+<span class="text-on-surface-variant">Custom Keybind Listener</span>
+<button class="text-primary font-semibold hover:underline flex items-center gap-1">
+<span>Reset Default Binds</span>
+</button>
+</div>
+</section>
+</div>
+</div>
+</div>
+<script>
+  (function initOverlaySettings() {
+    let offsetX = 0;
+    let offsetY = 0;
+
+    const inputX = document.getElementById('input-x');
+    const inputY = document.getElementById('input-y');
+    const reticle = document.getElementById('crosshair-reticle');
+
+    function updateReticle() {
+      if (reticle) {
+        reticle.style.transform = `translate(${offsetX * 2}px, ${offsetY * 2}px)`;
+      }
+      if (inputX) inputX.value = offsetX;
+      if (inputY) inputY.value = offsetY;
+    }
+
+    // Nudge Controls
+    document.getElementById('nudge-up')?.addEventListener('click', () => {
+      offsetY -= 1;
+      updateReticle();
+    });
+    document.getElementById('nudge-down')?.addEventListener('click', () => {
+      offsetY += 1;
+      updateReticle();
+    });
+    document.getElementById('nudge-left')?.addEventListener('click', () => {
+      offsetX -= 1;
+      updateReticle();
+    });
+    document.getElementById('nudge-right')?.addEventListener('click', () => {
+      offsetX += 1;
+      updateReticle();
+    });
+    document.getElementById('snap-center')?.addEventListener('click', () => {
+      offsetX = 0;
+      offsetY = 0;
+      updateReticle();
+    });
+
+    inputX?.addEventListener('change', (e) => {
+      offsetX = parseInt(e.target.value, 10) || 0;
+      updateReticle();
+    });
+    inputY?.addEventListener('change', (e) => {
+      offsetY = parseInt(e.target.value, 10) || 0;
+      updateReticle();
+    });
+
+    // Neomorphic Toggle Functionality
+    function bindToggle(buttonId) {
+      const btn = document.getElementById(buttonId);
+      if (!btn) return;
+      btn.addEventListener('click', () => {
+        const isChecked = btn.getAttribute('aria-checked') === 'true';
+        const newState = !isChecked;
+        btn.setAttribute('aria-checked', String(newState));
+        const thumb = btn.querySelector('.toggle-thumb');
+        if (thumb) {
+          if (newState) {
+            thumb.classList.remove('translate-x-0', 'bg-secondary');
+            thumb.classList.add('translate-x-6', 'bg-primary');
+          } else {
+            thumb.classList.remove('translate-x-6', 'bg-primary');
+            thumb.classList.add('translate-x-0', 'bg-secondary');
+          }
+        }
+      });
+    }
+
+    bindToggle('toggle-clickthrough');
+    bindToggle('toggle-hwaccel');
+    bindToggle('toggle-vsync');
+
+    // Framerate Segmented Button Selector
+    const fpsButtons = document.querySelectorAll('.fps-btn');
+    fpsButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        fpsButtons.forEach(b => {
+          b.classList.remove('shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]', 'text-primary');
+          b.classList.add('shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)]', 'text-on-surface');
+        });
+        btn.classList.remove('shadow-[3px_3px_6px_rgba(0,0,0,0.06),-3px_-3px_6px_rgba(255,255,255,0.7)]', 'text-on-surface');
+        btn.classList.add('shadow-[inset_2px_2px_4px_rgba(0,0,0,0.06),inset_-2px_-2px_4px_rgba(255,255,255,0.6)]', 'text-primary');
+      });
+    });
+
+    // Rehook feedback micro-interaction
+    const restartBtn = document.getElementById('engine-restart-btn');
+    if (restartBtn) {
+      restartBtn.addEventListener('click', () => {
+        const icon = restartBtn.querySelector('.material-symbols-outlined');
+        if (icon) icon.classList.add('animate-spin');
+        setTimeout(() => {
+          if (icon) icon.classList.remove('animate-spin');
+        }, 600);
+      });
+    }
+  })();
+</script></main></div></body></html>
