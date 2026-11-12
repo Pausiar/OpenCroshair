@@ -49,7 +49,7 @@ Packaging uses the release binary, so run `cargo build --release` first. Each sc
 powershell -ExecutionPolicy Bypass -File installer\build-portable.ps1 -Version 0.1.0
 ```
 
-Produces `dist\OpenCrosshair-0.1.0-x64-portable.zip` containing `opencrosshair.exe`, `LICENSE` and
+Produces `dist\OpenCrosshair-0.1.0-portable-win64.zip` containing `opencrosshair.exe`, `LICENSE` and
 `README.md` at the top level. The ZIP needs no installation.
 
 ### Installer
@@ -60,7 +60,7 @@ powershell -ExecutionPolicy Bypass -File installer\build-installer.ps1 -Version 
 
 The script finds `ISCC.exe` on `PATH` or in the default Inno Setup 6 install folder, then runs it on
 `installer\OpenCrosshair.iss` with `/DMyAppVersion=<version>`. It produces
-`dist\OpenCrosshair-0.1.0-x64-setup.exe`.
+`dist\OpenCrosshair-0.1.0-setup.exe`.
 
 Before compiling, the script checks that these inputs exist:
 
