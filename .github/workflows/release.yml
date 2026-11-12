@@ -1,0 +1,116 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build portable ZIP and installer
+    runs-on: windows-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Resolve version from tag and check Cargo.toml
+        id: version
+        shell: pwsh
+        env:
+          TAG: ${{ github.ref_name }}
+        run: |
+          $tagMatch = [regex]::Match($env:TAG, '^v(\d+\.\d+\.\d+)$')
+          if (-not $tagMatch.Success) {
+            throw "Tag '$($env:TAG)' must look like vX.Y.Z"
+          }
+          $version = $tagMatch.Groups[1].Value
+
+          $cargoToml = Get-Content -Raw -Path Cargo.toml
+          $cargoMatch = [regex]::Match($cargoToml, '(?m)^version\s*=\s*"([^"]+)"')
+          if (-not $cargoMatch.Success) {
+            throw "Could not find the package version in Cargo.toml"
+          }
+          $cargoVersion = $cargoMatch.Groups[1].Value
+          if ($cargoVersion -ne $version) {
+            throw "Cargo.toml version '$cargoVersion' does not match tag version '$version'"
+          }
+
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append -Encoding utf8
+          Write-Host "Building version $version"
+
+      - name: Install stable toolchain
+        shell: pwsh
+        run: |
+          rustup toolchain install stable --profile minimal
+          rustup default stable
+          rustup show
+
+      - name: Cache cargo registry and build output
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry/index
+            ~/.cargo/registry/cache
+            ~/.cargo/git/db
+            target
+          key: ${{ runner.os }}-release-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-release-cargo-
+
+      - name: Build release binary
+        run: cargo build --release
+
+      - name: Ensure Inno Setup 6 is installed
+        shell: pwsh
+        run: |
+          $candidates = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          )
+          $found = $candidates | Where-Object { Test-Path $_ }
+          if (-not $found -and -not (Get-Command iscc -ErrorAction SilentlyContinue)) {
+            choco install innosetup --no-progress -y
+          }
+
+      - name: Build portable ZIP
+        shell: pwsh
+        run: ./installer/build-portable.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Build installer
+        shell: pwsh
+        run: ./installer/build-installer.ps1 -Version "${{ steps.version.outputs.version }}"
+
+      - name: Upload release files as workflow artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-files
+          path: |
+            dist/*-portable.zip
+            dist/*-setup.exe
+          if-no-files-found: error
+          retention-days: 14
+
+  release:
+    name: Create GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Download release files
+        uses: actions/download-artifact@v4
+        with:
+          name: release-files
+          path: release-files
+
+      - name: Create GitHub release with files
+        uses: softprops/action-gh-release@v2.0.8
+        with:
+          files: release-files/*
+          fail_on_unmatched_files: true
+          generate_release_notes: true
