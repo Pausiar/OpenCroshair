@@ -137,10 +137,12 @@ pub(crate) fn path_prompt_window(ctx: &egui::Context, prompt: &mut PathPrompt) -
                         .hint_text("C:\\path\\to\\file.json")
                         .desired_width(width),
                 );
-                if CAN_BROWSE && secondary_button(ui, "Browse...").clicked() {
-                    if let Some(p) = pick_path(prompt.kind, prompt.save, &prompt.path) {
-                        prompt.path = p.display().to_string();
-                    }
+                let browse = CAN_BROWSE && secondary_button(ui, "Browse...").clicked();
+                if let Some(p) = browse
+                    .then(|| pick_path(prompt.kind, prompt.save, &prompt.path))
+                    .flatten()
+                {
+                    prompt.path = p.display().to_string();
                 }
             });
             ui.add_space(10.0);

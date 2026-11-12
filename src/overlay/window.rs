@@ -44,7 +44,7 @@ use std::sync::mpsc::Receiver;
 /// Convert premultiplied RGBA (renderer output) to premultiplied BGRA (DIB byte order).
 /// Returns false and writes nothing if the buffers are mismatched or not whole pixels.
 pub fn premultiplied_rgba_to_bgra(src: &[u8], dst: &mut [u8]) -> bool {
-    if src.len() != dst.len() || src.len() % 4 != 0 {
+    if src.len() != dst.len() || !src.len().is_multiple_of(4) {
         return false;
     }
     for (d, s) in dst.chunks_exact_mut(4).zip(src.chunks_exact(4)) {

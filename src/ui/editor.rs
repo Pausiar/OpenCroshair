@@ -392,7 +392,6 @@ fn preview_area(ui: &mut egui::Ui, state: &mut AppState, ui_state: &mut EditorUi
     } else {
         PreviewBg::Light
     });
-    let previous_bg = bg;
 
     ui.horizontal_wrapped(|ui| {
         ui.label(muted("Background"));
@@ -413,14 +412,15 @@ fn preview_area(ui: &mut egui::Ui, state: &mut AppState, ui_state: &mut EditorUi
             ui.add(egui::Slider::new(v, 0..=255).text("Level"));
         }
     });
-    if bg != previous_bg {
-        if let PreviewBg::Dark | PreviewBg::Light = bg {
-            let dark = bg == PreviewBg::Dark;
-            if state.settings.preview_dark_background != dark {
-                state.settings.preview_dark_background = dark;
-                state.dirty = true;
-            }
-        }
+    // Dark and Light are persisted through the existing settings flag.
+    let dark = match bg {
+        PreviewBg::Dark => Some(true),
+        PreviewBg::Light => Some(false),
+        _ => None,
+    };
+    if let Some(dark) = dark.filter(|d| *d != state.settings.preview_dark_background) {
+        state.settings.preview_dark_background = dark;
+        state.dirty = true;
     }
     ui_state.bg = Some(bg);
 
@@ -687,8 +687,10 @@ mod tests {
 
     #[test]
     fn matching_preset_found_only_for_identical_crosshair() {
-        let mut custom = Crosshair::default();
-        custom.gap = 9.0;
+        let custom = Crosshair {
+            gap: 9.0,
+            ..Crosshair::default()
+        };
         let preset = Preset {
             id: "p1".into(),
             crosshair: custom.clone(),

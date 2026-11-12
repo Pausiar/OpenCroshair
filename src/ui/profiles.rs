@@ -317,15 +317,14 @@ fn form_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
                         .hint_text("cs2.exe")
                         .desired_width(width),
                 );
-                if CAN_BROWSE && secondary_button(ui, "Browse...").clicked() {
-                    if let Some(path) = presets::pick_path(FileKind::Exe, false, "") {
-                        let exe = normalize_exe(&path.display().to_string());
-                        if form.name.trim().is_empty() {
-                            form.name = stem_of(&exe);
-                        }
-                        form.exe = exe;
-                        form.error = None;
+                let browse = CAN_BROWSE && secondary_button(ui, "Browse...").clicked();
+                if let Some(path) = browse.then(|| presets::pick_path(FileKind::Exe, false, "")).flatten() {
+                    let exe = normalize_exe(&path.display().to_string());
+                    if form.name.trim().is_empty() {
+                        form.name = stem_of(&exe);
                     }
+                    form.exe = exe;
+                    form.error = None;
                 }
             });
             ui.add_space(4.0);
