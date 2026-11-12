@@ -462,6 +462,12 @@ mod platform {
         Some(HotKey::new(Some(mods), code_for(&spec.key)?))
     }
 
+    /// Parse text such as "Ctrl+Alt+F1" into a registrable `HotKey`.
+    pub fn parse_hotkey(input: &str) -> Result<HotKey, super::HotkeyError> {
+        let spec = super::parse_spec(input)?;
+        to_hotkey(&spec).ok_or_else(|| super::HotkeyError::UnknownKey(spec.key.clone()))
+    }
+
     pub struct HotkeyManager {
         inner: GlobalHotKeyManager,
         registered: Vec<(HotkeyAction, HotKey)>,
@@ -563,6 +569,8 @@ mod platform {
 }
 
 pub use platform::HotkeyManager;
+#[cfg(windows)]
+pub use platform::parse_hotkey;
 
 #[cfg(test)]
 mod tests {

@@ -81,12 +81,12 @@ pub fn spawn_thread(_rx: Receiver<OverlayCommand>) -> Option<std::thread::JoinHa
 
 #[cfg(windows)]
 mod imp {
+    use super::super::OverlayCommand;
     use super::super::positioning::{self, compute_position_scaled, dpi_scale_for};
     use super::super::windows_api::{
-        self, Surface, WM_APP_COMMAND, WM_APP_DISPLAY_CHANGED, WM_APP_GAME_WINDOW,
+        self, HookHandle, Surface, WM_APP_COMMAND, WM_APP_DISPLAY_CHANGED, WM_APP_GAME_WINDOW,
     };
     use super::premultiplied_rgba_to_bgra;
-    use super::super::OverlayCommand;
     use crate::crosshair::model::Crosshair;
     use crate::crosshair::renderer::render;
     use crate::storage::config::{CenterMode, PositionSettings};
@@ -94,7 +94,6 @@ mod imp {
     use std::sync::atomic::Ordering;
     use std::sync::mpsc::{Receiver, TryRecvError};
     use windows::Win32::Foundation::HWND;
-    use windows::Win32::UI::Accessibility::{HWINEVENTHOOK};
     use windows::Win32::UI::WindowsAndMessaging::{
         DispatchMessageW, EVENT_OBJECT_LOCATIONCHANGE, EVENT_SYSTEM_FOREGROUND, GetMessageW, MSG, OBJID_WINDOW,
         TranslateMessage, WM_TIMER,
@@ -109,7 +108,7 @@ mod imp {
     }
 
     unsafe extern "system" fn foreground_proc(
-        _hook: HWINEVENTHOOK,
+        _hook: HookHandle,
         _event: u32,
         _hwnd: HWND,
         _id_object: i32,
@@ -121,7 +120,7 @@ mod imp {
     }
 
     unsafe extern "system" fn location_proc(
-        _hook: HWINEVENTHOOK,
+        _hook: HookHandle,
         _event: u32,
         hwnd: HWND,
         id_object: i32,
@@ -144,7 +143,7 @@ mod imp {
         surface: Option<Surface>,
         /// Crosshair and DPI scale the current surface was rendered for.
         rendered: Option<(Crosshair, f32)>,
-        hooks: Vec<HWINEVENTHOOK>,
+        hooks: Vec<HookHandle>,
         timer_active: bool,
     }
 
@@ -185,7 +184,10 @@ mod imp {
         /// Re-render only if the crosshair or DPI scale differs from the cached surface.
         fn ensure_surface(&mut self, scale: f32) -> Result<(), String> {
             if self.surface.is_some()
-                && self.rendered.as_ref().is_some_and(|(c, s)| *c == self.crosshair && *s == scale)
+                && self
+                    .rendered
+                    .as_ref()
+                    .is_some_and(|(c, s)| *c == self.crosshair && *s == scale)
             {
                 return Ok(());
             }

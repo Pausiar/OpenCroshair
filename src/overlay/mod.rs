@@ -10,7 +10,10 @@ pub mod windows_api;
 #[derive(Debug, Clone)]
 pub enum OverlayCommand {
     /// Replace crosshair + position and redraw.
-    Update { crosshair: Crosshair, position: PositionSettings },
+    Update {
+        crosshair: Crosshair,
+        position: PositionSettings,
+    },
     /// Show/hide window (overlay_enabled && crosshair_visible).
     SetVisible(bool),
     /// Re-position only (monitor / game window changed).

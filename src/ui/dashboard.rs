@@ -47,12 +47,13 @@ fn overlay_card(ui: &mut Ui, state: &mut AppState) {
         |ui| {
             let mut on = state.settings.overlay_enabled;
             ui.horizontal(|ui| {
-                let (pill, color) = if on {
-                    ("Active", theme::SUCCESS)
-                } else {
-                    ("Off", TEXT2)
-                };
-                ui.label(RichText::new(if on { "Overlay is on" } else { "Overlay is off" }).size(18.0).strong().color(TEXT));
+                let (pill, color) = if on { ("Active", theme::SUCCESS) } else { ("Off", TEXT2) };
+                ui.label(
+                    RichText::new(if on { "Overlay is on" } else { "Overlay is off" })
+                        .size(18.0)
+                        .strong()
+                        .color(TEXT),
+                );
                 widgets::status_pill(ui, pill, color);
                 ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
                     if widgets::toggle_switch(ui, &mut on).changed() {
@@ -221,7 +222,12 @@ fn recent_row(ui: &mut Ui, preset: &Preset, active: bool) -> egui::Response {
         let thumb = Rect::from_min_size(rect.left_top() + Vec2::new(8.0, 5.0), Vec2::splat(36.0));
         let bg_rect = rect;
         ui.painter().rect_filled(bg_rect, theme::RADIUS_SM, fill);
-        ui.painter().rect_stroke(bg_rect, theme::RADIUS_SM, egui::Stroke::new(1.0, BORDER), egui::StrokeKind::Inside);
+        ui.painter().rect_stroke(
+            bg_rect,
+            theme::RADIUS_SM,
+            egui::Stroke::new(1.0, BORDER),
+            egui::StrokeKind::Inside,
+        );
         paint_crosshair(ui, thumb, &preset.crosshair, 1.0);
         let p = ui.painter();
         let x = rect.left() + 56.0;

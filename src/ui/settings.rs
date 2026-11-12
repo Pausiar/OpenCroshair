@@ -31,11 +31,27 @@ const TABS: [(Tab, &str); 7] = [
 
 /// Hotkey rows: (settings key, label, description). Keys match `app::action_key`.
 pub const HOTKEY_ROWS: [(&str, &str, &str); 5] = [
-    ("toggle_crosshair", "Toggle crosshair", "Show or hide the crosshair without changing the overlay."),
+    (
+        "toggle_crosshair",
+        "Toggle crosshair",
+        "Show or hide the crosshair without changing the overlay.",
+    ),
     ("toggle_overlay", "Toggle overlay", "Turn the overlay window on or off."),
-    ("next_preset", "Next preset", "Apply the next favorite preset (or any preset if none are favorites)."),
-    ("prev_preset", "Previous preset", "Apply the previous favorite preset (or any preset if none are favorites)."),
-    ("toggle_auto_profiles", "Auto profiles", "Turn automatic game profiles on or off."),
+    (
+        "next_preset",
+        "Next preset",
+        "Apply the next favorite preset (or any preset if none are favorites).",
+    ),
+    (
+        "prev_preset",
+        "Previous preset",
+        "Apply the previous favorite preset (or any preset if none are favorites).",
+    ),
+    (
+        "toggle_auto_profiles",
+        "Auto profiles",
+        "Turn automatic game profiles on or off.",
+    ),
 ];
 
 const TAB_ID: &str = "oc_settings_tab";
@@ -46,10 +62,15 @@ const MONITORS_ID: &str = "oc_settings_monitors";
 /// Draw the Settings page.
 pub fn show(ui: &mut Ui, state: &mut AppState) {
     let mut tab: Tab = ui.ctx().data(|d| d.get_temp(state_id(TAB_ID))).unwrap_or_default();
-    widgets::page_header(ui, "Settings", "Window, overlay, hotkeys, appearance, detection and startup options.");
+    widgets::page_header(
+        ui,
+        "Settings",
+        "Window, overlay, hotkeys, appearance, detection and startup options.",
+    );
     if widgets::segmented(ui, &mut tab, &TABS.map(|(t, l)| (t, l))) {
         // Leaving the hotkey tab cancels any pending capture.
-        ui.ctx().data_mut(|d| d.remove::<Option<&'static str>>(state_id(CAPTURE_ID)));
+        ui.ctx()
+            .data_mut(|d| d.remove::<Option<&'static str>>(state_id(CAPTURE_ID)));
     }
     ui.ctx().data_mut(|d| d.insert_temp(state_id(TAB_ID), tab));
     ui.add_space(12.0);
@@ -138,75 +159,75 @@ fn overlay_tab(ui: &mut Ui, state: &mut AppState) {
     let monitors = cached_monitors(ui);
     let mut changed = false;
 
-    widgets::titled_card(
-        ui,
-        "Position",
-        Some("Where the crosshair is drawn on screen."),
-        |ui| {
-            ui.label(RichText::new("Anchor").size(13.0).color(TEXT2));
-            let mut mode = state.settings.position.mode;
-            if widgets::segmented(
-                ui,
-                &mut mode,
-                &[
-                    (CenterMode::Monitor, "Monitor center"),
-                    (CenterMode::GameWindow, "Game window center"),
-                    (CenterMode::Custom, "Custom position"),
-                ],
-            ) {
-                state.settings.position.mode = mode;
-                changed = true;
-            }
-            ui.add_space(10.0);
+    widgets::titled_card(ui, "Position", Some("Where the crosshair is drawn on screen."), |ui| {
+        ui.label(RichText::new("Anchor").size(13.0).color(TEXT2));
+        let mut mode = state.settings.position.mode;
+        if widgets::segmented(
+            ui,
+            &mut mode,
+            &[
+                (CenterMode::Monitor, "Monitor center"),
+                (CenterMode::GameWindow, "Game window center"),
+                (CenterMode::Custom, "Custom position"),
+            ],
+        ) {
+            state.settings.position.mode = mode;
+            changed = true;
+        }
+        ui.add_space(10.0);
 
-            match state.settings.position.mode {
-                CenterMode::Monitor | CenterMode::GameWindow => {
-                    ui.horizontal(|ui| {
-                        ui.label(RichText::new("Monitor").color(TEXT).size(14.0));
-                        let current = state.settings.position.monitor;
-                        let selected = monitor_label(current, &monitors);
-                        let mut pick = current;
-                        egui::ComboBox::from_id_salt("oc_overlay_monitor")
-                            .selected_text(selected)
-                            .width(360.0)
-                            .show_ui(ui, |ui| {
-                                ui.selectable_value(&mut pick, None, "Primary monitor");
-                                for m in &monitors {
-                                    ui.selectable_value(&mut pick, Some(m.index), monitor_text(m));
-                                }
-                            });
-                        if pick != current {
-                            state.settings.position.monitor = pick;
-                            changed = true;
-                        }
-                        if widgets::secondary_button(ui, "Refresh").clicked() {
-                            ui.ctx().data_mut(|d| d.remove::<Vec<MonitorInfo>>(state_id(MONITORS_ID)));
-                        }
-                    });
-                    ui.add_space(8.0);
-                    ui.label(RichText::new("Offset from the anchor, in pixels").size(12.0).color(TEXT2));
-                    ui.horizontal(|ui| {
-                        changed |= int_field(ui, "X", &mut state.settings.position.offset_x, -2000, 2000);
-                        ui.add_space(16.0);
-                        changed |= int_field(ui, "Y", &mut state.settings.position.offset_y, -2000, 2000);
-                    });
-                }
-                CenterMode::Custom => {
-                    ui.label(
-                        RichText::new("Absolute screen position of the crosshair center, in physical pixels.")
-                            .size(12.0)
-                            .color(TEXT2),
-                    );
-                    ui.add_space(4.0);
-                    ui.horizontal(|ui| {
-                        changed |= int_field(ui, "X", &mut state.settings.position.custom_x, -20000, 20000);
-                        ui.add_space(16.0);
-                        changed |= int_field(ui, "Y", &mut state.settings.position.custom_y, -20000, 20000);
-                    });
-                }
+        match state.settings.position.mode {
+            CenterMode::Monitor | CenterMode::GameWindow => {
+                ui.horizontal(|ui| {
+                    ui.label(RichText::new("Monitor").color(TEXT).size(14.0));
+                    let current = state.settings.position.monitor;
+                    let selected = monitor_label(current, &monitors);
+                    let mut pick = current;
+                    egui::ComboBox::from_id_salt("oc_overlay_monitor")
+                        .selected_text(selected)
+                        .width(360.0)
+                        .show_ui(ui, |ui| {
+                            ui.selectable_value(&mut pick, None, "Primary monitor");
+                            for m in &monitors {
+                                ui.selectable_value(&mut pick, Some(m.index), monitor_text(m));
+                            }
+                        });
+                    if pick != current {
+                        state.settings.position.monitor = pick;
+                        changed = true;
+                    }
+                    if widgets::secondary_button(ui, "Refresh").clicked() {
+                        ui.ctx()
+                            .data_mut(|d| d.remove::<Vec<MonitorInfo>>(state_id(MONITORS_ID)));
+                    }
+                });
+                ui.add_space(8.0);
+                ui.label(
+                    RichText::new("Offset from the anchor, in pixels")
+                        .size(12.0)
+                        .color(TEXT2),
+                );
+                ui.horizontal(|ui| {
+                    changed |= int_field(ui, "X", &mut state.settings.position.offset_x, -2000, 2000);
+                    ui.add_space(16.0);
+                    changed |= int_field(ui, "Y", &mut state.settings.position.offset_y, -2000, 2000);
+                });
             }
-        },
-    );
+            CenterMode::Custom => {
+                ui.label(
+                    RichText::new("Absolute screen position of the crosshair center, in physical pixels.")
+                        .size(12.0)
+                        .color(TEXT2),
+                );
+                ui.add_space(4.0);
+                ui.horizontal(|ui| {
+                    changed |= int_field(ui, "X", &mut state.settings.position.custom_x, -20000, 20000);
+                    ui.add_space(16.0);
+                    changed |= int_field(ui, "Y", &mut state.settings.position.custom_y, -20000, 20000);
+                });
+            }
+        }
+    });
 
     if changed {
         state.push_overlay();
@@ -269,14 +290,14 @@ fn hotkey_field<'a>(h: &'a HotkeySettings, key: &str) -> &'a str {
 
 fn hotkeys_tab(ui: &mut Ui, state: &mut AppState) {
     let capture_id = state_id(CAPTURE_ID);
-    let mut capturing: Option<&'static str> =
-        ui.ctx().data(|d| d.get_temp::<Option<&'static str>>(capture_id)).flatten();
+    let mut capturing: Option<&'static str> = ui
+        .ctx()
+        .data(|d| d.get_temp::<Option<&'static str>>(capture_id))
+        .flatten();
 
     // Finish or cancel an active capture.
     if let Some(key) = capturing {
-        let (escape, combo) = ui.input(|i| {
-            (i.key_pressed(egui::Key::Escape), capture_hotkey_string(i))
-        });
+        let (escape, combo) = ui.input(|i| (i.key_pressed(egui::Key::Escape), capture_hotkey_string(i)));
         if escape {
             capturing = None;
         } else if let Some(s) = combo {
@@ -347,27 +368,44 @@ fn hotkeys_tab(ui: &mut Ui, state: &mut AppState) {
 fn appearance_tab(ui: &mut Ui, state: &mut AppState) {
     let mut dark = state.settings.preview_dark_background;
     let mut changed = false;
-    widgets::titled_card(ui, "Preview", Some("Appearance of the crosshair preview inside the app."), |ui| {
-        ui.label(RichText::new("Preview background").size(13.0).color(TEXT2));
-        if widgets::segmented(ui, &mut dark, &[(true, "Dark"), (false, "Light")]) {
-            state.settings.preview_dark_background = dark;
-            changed = true;
-        }
-        ui.add_space(12.0);
-        ui.label(RichText::new("Preview zoom").size(13.0).color(TEXT2));
-        let mut zoom = state.settings.preview_zoom;
-        if ui
-            .add(egui::Slider::new(&mut zoom, 1.0..=8.0).step_by(0.5).suffix("x").max_decimals(1))
-            .changed()
-        {
-            state.settings.preview_zoom = zoom;
-            changed = true;
-        }
-        ui.add_space(12.0);
-        let c = state.settings.active_crosshair.clone();
-        let (rect, _) = ui.allocate_exact_size(egui::vec2(ui.available_width().min(520.0), 180.0), egui::Sense::hover());
-        widgets::preview_box(ui, rect, state.settings.preview_dark_background, &c, state.settings.preview_zoom);
-    });
+    widgets::titled_card(
+        ui,
+        "Preview",
+        Some("Appearance of the crosshair preview inside the app."),
+        |ui| {
+            ui.label(RichText::new("Preview background").size(13.0).color(TEXT2));
+            if widgets::segmented(ui, &mut dark, &[(true, "Dark"), (false, "Light")]) {
+                state.settings.preview_dark_background = dark;
+                changed = true;
+            }
+            ui.add_space(12.0);
+            ui.label(RichText::new("Preview zoom").size(13.0).color(TEXT2));
+            let mut zoom = state.settings.preview_zoom;
+            if ui
+                .add(
+                    egui::Slider::new(&mut zoom, 1.0..=8.0)
+                        .step_by(0.5)
+                        .suffix("x")
+                        .max_decimals(1),
+                )
+                .changed()
+            {
+                state.settings.preview_zoom = zoom;
+                changed = true;
+            }
+            ui.add_space(12.0);
+            let c = state.settings.active_crosshair.clone();
+            let (rect, _) =
+                ui.allocate_exact_size(egui::vec2(ui.available_width().min(520.0), 180.0), egui::Sense::hover());
+            widgets::preview_box(
+                ui,
+                rect,
+                state.settings.preview_dark_background,
+                &c,
+                state.settings.preview_zoom,
+            );
+        },
+    );
     if changed {
         state.dirty = true;
     }
@@ -435,13 +473,18 @@ fn startup_tab(ui: &mut Ui, state: &mut AppState) {
 }
 
 fn about_tab(ui: &mut Ui) {
-    widgets::titled_card(ui, "OpenCrosshair", Some(&format!("Version {}", env!("CARGO_PKG_VERSION"))), |ui| {
-        ui.label(
+    widgets::titled_card(
+        ui,
+        "OpenCrosshair",
+        Some(&format!("Version {}", env!("CARGO_PKG_VERSION"))),
+        |ui| {
+            ui.label(
             RichText::new("A crosshair overlay for Windows games. Design a crosshair, save presets, and let game profiles switch them automatically.")
                 .size(13.0)
                 .color(TEXT),
         );
-    });
+        },
+    );
     ui.add_space(4.0);
     widgets::titled_card(ui, "Privacy", None, |ui| {
         for line in [

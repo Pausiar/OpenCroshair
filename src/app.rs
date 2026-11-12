@@ -3,9 +3,9 @@
 use crate::hotkeys::{HotkeyAction, HotkeyManager};
 use crate::overlay::OverlayHandle;
 use crate::profiles::detection::{DetectionEvent, Detector};
-use crate::profiles::manager::{resolve_preset_id, Resolution};
+use crate::profiles::manager::{Resolution, resolve_preset_id};
 use crate::state::{AppState, Page};
-use crate::storage::config::{Paths, SaveJob, SaveWorker, LoadedData};
+use crate::storage::config::{LoadedData, Paths, SaveJob, SaveWorker};
 use crate::system::startup;
 use crate::system::tray::{Tray, TrayEvent};
 use crate::ui::{dashboard, editor, navigation, presets, profiles, settings, theme, widgets};
@@ -21,6 +21,28 @@ const SAVE_MAX_WAIT: Duration = Duration::from_millis(2000);
 const POLL_INTERVAL: Duration = Duration::from_millis(200);
 const TOAST_TTL: Duration = Duration::from_secs(4);
 const TOAST_TTL_ERROR: Duration = Duration::from_secs(7);
+
+/// Indices of `presets` with favorites first, keeping the original order within each group.
+pub fn favorites_first_order(presets: &[crate::crosshair::model::Preset]) -> Vec<usize> {
+    let mut idx: Vec<usize> = (0..presets.len()).collect();
+    idx.sort_by_key(|&i| !presets[i].favorite);
+    idx
+}
+
+/// Next index when stepping by `delta` through `len` items, wrapping around.
+/// With no current selection, forward starts at the first item and backward at the last.
+/// `None` when there is nothing to step through.
+pub fn cycle_index(len: usize, current: Option<usize>, delta: isize) -> Option<usize> {
+    if len == 0 {
+        return None;
+    }
+    let len_i = len as isize;
+    Some(match current {
+        Some(i) => (i as isize + delta).rem_euclid(len_i) as usize,
+        None if delta >= 0 => 0,
+        None => len - 1,
+    })
+}
 
 /// Stable key for a hotkey action, shared with `settings::HOTKEY_ROWS` and `AppState::hotkey_errors`.
 pub fn action_key(action: HotkeyAction) -> &'static str {
@@ -62,8 +84,7 @@ impl App {
         let ctx = cc.egui_ctx.clone();
         theme::apply(&ctx);
 
-        let mut pending_toasts: VecDeque<(String, bool)> =
-            data.warnings.iter().map(|w| (w.clone(), true)).collect();
+        let mut pending_toasts: VecDeque<(String, bool)> = data.warnings.iter().map(|w| (w.clone(), true)).collect();
 
         let repaint_ctx = ctx.clone();
         let detector = Detector::spawn(Box::new(move || repaint_ctx.request_repaint()));
@@ -151,7 +172,11 @@ impl App {
         self.state.settings.crosshair_visible = !self.state.settings.crosshair_visible;
         self.state.push_overlay();
         self.state.dirty = true;
-        let msg = if self.state.settings.crosshair_visible { "Crosshair shown" } else { "Crosshair hidden" };
+        let msg = if self.state.settings.crosshair_visible {
+            "Crosshair shown"
+        } else {
+            "Crosshair hidden"
+        };
         self.state.toast(msg, false);
     }
 
@@ -159,32 +184,29 @@ impl App {
         self.state.settings.overlay_enabled = !self.state.settings.overlay_enabled;
         self.state.push_overlay();
         self.state.dirty = true;
-        let msg = if self.state.settings.overlay_enabled { "Overlay on" } else { "Overlay off" };
+        let msg = if self.state.settings.overlay_enabled {
+            "Overlay on"
+        } else {
+            "Overlay off"
+        };
         self.state.toast(msg, false);
     }
 
     /// Step through presets in favorites-first order (stable within each group).
     fn cycle_preset(&mut self, delta: isize) {
-        let mut order: Vec<&crate::crosshair::model::Preset> = self.state.presets.iter().collect();
-        order.sort_by_key(|p| !p.favorite);
-        let ids: Vec<(String, String)> = order.iter().map(|p| (p.id.clone(), p.name.clone())).collect();
-        if ids.is_empty() {
-            self.state.toast("No presets to cycle through", true);
-            return;
-        }
-        let len = ids.len() as isize;
+        let order = favorites_first_order(&self.state.presets);
         let current = self
             .state
             .settings
             .active_preset_id
             .as_ref()
-            .and_then(|active| ids.iter().position(|(id, _)| id == active));
-        let next = match current {
-            Some(i) => (i as isize + delta).rem_euclid(len) as usize,
-            None if delta >= 0 => 0,
-            None => (len - 1) as usize,
+            .and_then(|active| order.iter().position(|&i| &self.state.presets[i].id == active));
+        let Some(next) = cycle_index(order.len(), current, delta) else {
+            self.state.toast("No presets to cycle through", true);
+            return;
         };
-        let (id, name) = ids[next].clone();
+        let preset = &self.state.presets[order[next]];
+        let (id, name) = (preset.id.clone(), preset.name.clone());
         self.state.apply_preset(&id);
         self.state.toast(format!("Preset: {name}"), false);
     }
@@ -211,7 +233,8 @@ impl App {
                     if self.state.presets.iter().any(|p| p.id == pid) {
                         self.state.apply_preset(&pid);
                     } else {
-                        self.state.toast("The preset for this game profile no longer exists", true);
+                        self.state
+                            .toast("The preset for this game profile no longer exists", true);
                     }
                 }
             }
@@ -291,7 +314,10 @@ impl App {
     }
 
     fn sync_tray(&mut self) {
-        let states = (self.state.settings.crosshair_visible, self.state.settings.overlay_enabled);
+        let states = (
+            self.state.settings.crosshair_visible,
+            self.state.settings.overlay_enabled,
+        );
         if self.tray_states != Some(states) {
             if let Some(t) = self.tray.as_mut() {
                 t.set_states(states.0, states.1);
@@ -327,7 +353,11 @@ impl App {
         let want = self.state.settings.launch_at_startup;
         match startup::set_enabled(want) {
             Ok(()) => {
-                let msg = if want { "Launch at Windows startup is on" } else { "Launch at Windows startup is off" };
+                let msg = if want {
+                    "Launch at Windows startup is on"
+                } else {
+                    "Launch at Windows startup is off"
+                };
                 self.state.toast(msg, false);
             }
             Err(e) => {
@@ -443,7 +473,10 @@ fn register_hotkeys(
     settings: &crate::storage::config::Settings,
 ) -> Vec<(String, String)> {
     let Some(hk) = hotkeys.as_mut() else {
-        return vec![("all".to_string(), "Global hotkeys are unavailable on this system.".to_string())];
+        return vec![(
+            "all".to_string(),
+            "Global hotkeys are unavailable on this system.".to_string(),
+        )];
     };
     hk.register_all(&settings.hotkeys)
         .into_iter()
@@ -490,11 +523,7 @@ impl eframe::App for App {
             .show(ui, |ui| navigation::show(ui, &mut self.state));
 
         egui::CentralPanel::default()
-            .frame(
-                Frame::new()
-                    .fill(theme::BG)
-                    .inner_margin(Margin::symmetric(28, 22)),
-            )
+            .frame(Frame::new().fill(theme::BG).inner_margin(Margin::symmetric(28, 22)))
             .show(ui, |ui| match self.state.page {
                 Page::Overview => dashboard::show(ui, &mut self.state),
                 Page::Editor => editor::show(ui, &mut self.state),
@@ -512,5 +541,61 @@ impl eframe::App for App {
             self.queue_save();
         }
         self.saver.flush();
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::crosshair::model::Preset;
+
+    fn preset(id: &str, favorite: bool) -> Preset {
+        Preset {
+            id: id.into(),
+            favorite,
+            ..Preset::default()
+        }
+    }
+
+    #[test]
+    fn cycle_wraps_both_directions() {
+        assert_eq!(cycle_index(3, Some(2), 1), Some(0));
+        assert_eq!(cycle_index(3, Some(0), -1), Some(2));
+        assert_eq!(cycle_index(3, Some(1), 1), Some(2));
+    }
+
+    #[test]
+    fn cycle_without_selection_and_empty() {
+        assert_eq!(cycle_index(4, None, 1), Some(0));
+        assert_eq!(cycle_index(4, None, -1), Some(3));
+        assert_eq!(cycle_index(0, None, 1), None);
+        assert_eq!(cycle_index(0, Some(0), -1), None);
+    }
+
+    #[test]
+    fn favorites_come_first_and_keep_order() {
+        let list = vec![
+            preset("a", false),
+            preset("b", true),
+            preset("c", false),
+            preset("d", true),
+        ];
+        assert_eq!(favorites_first_order(&list), vec![1, 3, 0, 2]);
+        assert_eq!(favorites_first_order(&[]), Vec::<usize>::new());
+    }
+
+    #[test]
+    fn action_keys_match_settings_rows() {
+        use crate::ui::settings::HOTKEY_ROWS;
+        let actions = [
+            HotkeyAction::ToggleCrosshair,
+            HotkeyAction::ToggleOverlay,
+            HotkeyAction::NextPreset,
+            HotkeyAction::PrevPreset,
+            HotkeyAction::ToggleAutoProfiles,
+        ];
+        for (action, row) in actions.iter().zip(HOTKEY_ROWS.iter()) {
+            assert_eq!(action_key(*action), row.0);
+        }
     }
 }

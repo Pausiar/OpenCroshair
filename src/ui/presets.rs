@@ -4,8 +4,8 @@ use crate::crosshair::model::Preset;
 use crate::state::{AppState, Page};
 use crate::storage::import_export::{export_collection, export_crosshair, merge_imports, parse_import};
 use crate::ui::theme::{self, BLUE, BORDER, SURFACE, TEXT, TEXT2};
-use crate::ui::widgets::{danger_button, paint_crosshair, primary_button, secondary_button};
-use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Id, Pos2, Rect, Sense, Stroke, StrokeKind, Vec2};
+use crate::ui::widgets::{danger_button, paint_crosshair, secondary_button};
+use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Pos2, Rect, Sense, Stroke, StrokeKind, Vec2};
 use std::path::{Path, PathBuf};
 
 const CARD_W: f32 = 220.0;
@@ -29,7 +29,13 @@ pub(crate) fn file_name_for(name: &str) -> String {
     let mut s: String = name
         .trim()
         .chars()
-        .map(|c| if c.is_ascii_alphanumeric() { c.to_ascii_lowercase() } else { '-' })
+        .map(|c| {
+            if c.is_ascii_alphanumeric() {
+                c.to_ascii_lowercase()
+            } else {
+                '-'
+            }
+        })
         .collect();
     while s.contains("--") {
         s = s.replace("--", "-");
@@ -195,7 +201,7 @@ enum Action {
 }
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
-    let memory_id = Id::new("presets_page_state");
+    let memory_id = ui.scope_id().with("presets_page_state");
     let mut pu: PresetsUi = ui.data(|d| d.get_temp(memory_id)).unwrap_or_default();
 
     toolbar(ui, state, &mut pu);
@@ -241,10 +247,7 @@ fn toolbar(ui: &mut egui::Ui, state: &mut AppState, pu: &mut PresetsUi) {
             ));
         }
         let can_export = !state.presets.is_empty();
-        if ui
-            .add_enabled(can_export, egui::Button::new("Export all"))
-            .clicked()
-        {
+        if ui.add_enabled(can_export, egui::Button::new("Export all")).clicked() {
             let content = export_collection(&state.presets);
             pu.prompt = Some((
                 Transfer::Export,
@@ -277,7 +280,9 @@ fn category_chips(ui: &mut egui::Ui, state: &AppState, pu: &mut PresetsUi) {
 
 fn grid(ui: &mut egui::Ui, state: &AppState, pu: &PresetsUi, actions: &mut Vec<Action>) {
     if state.presets.is_empty() {
-        ui.label(muted("No presets yet. Save a crosshair from the editor or import a file."));
+        ui.label(muted(
+            "No presets yet. Save a crosshair from the editor or import a file.",
+        ));
         return;
     }
     let query = pu.query.trim().to_lowercase();
@@ -287,25 +292,21 @@ fn grid(ui: &mut egui::Ui, state: &AppState, pu: &PresetsUi, actions: &mut Vec<A
         .filter(|p| !pu.favorites_only || p.favorite)
         .filter(|p| pu.category.as_ref().is_none_or(|c| &p.category == c))
         .filter(|p| {
-            query.is_empty()
-                || p.name.to_lowercase().contains(&query)
-                || p.category.to_lowercase().contains(&query)
+            query.is_empty() || p.name.to_lowercase().contains(&query) || p.category.to_lowercase().contains(&query)
         })
         .collect();
     if visible.is_empty() {
         ui.label(muted("No presets match the current filters."));
         return;
     }
-    egui::ScrollArea::vertical()
-        .auto_shrink([false, false])
-        .show(ui, |ui| {
-            ui.horizontal_wrapped(|ui| {
-                ui.spacing_mut().item_spacing = Vec2::splat(16.0);
-                for p in visible {
-                    card(ui, p, actions);
-                }
-            });
+    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+        ui.horizontal_wrapped(|ui| {
+            ui.spacing_mut().item_spacing = Vec2::splat(16.0);
+            for p in visible {
+                card(ui, p, actions);
+            }
         });
+    });
 }
 
 fn card(ui: &mut egui::Ui, p: &Preset, actions: &mut Vec<Action>) {
@@ -314,13 +315,23 @@ fn card(ui: &mut egui::Ui, p: &Preset, actions: &mut Vec<Action>) {
     let painter = ui.painter_at(rect);
     let border = if hovered { BLUE } else { BORDER };
     painter.rect_filled(rect, CornerRadius::same(12), SURFACE);
-    painter.rect_stroke(rect, CornerRadius::same(12), Stroke::new(1.0, border), StrokeKind::Inside);
+    painter.rect_stroke(
+        rect,
+        CornerRadius::same(12),
+        Stroke::new(1.0, border),
+        StrokeKind::Inside,
+    );
 
     let tile = Rect::from_min_size(rect.min + Vec2::splat(8.0), Vec2::new(CARD_W - 16.0, TILE_H - 8.0));
     painter.rect_filled(tile, CornerRadius::same(8), theme::PREVIEW_DARK);
     let bounds = p.crosshair.bounding_size() as f32;
     let zoom = (88.0 / bounds).clamp(0.5, 3.0);
-    paint_crosshair(ui, Rect::from_center_size(tile.center(), Vec2::splat(bounds * zoom)), &p.crosshair, zoom);
+    paint_crosshair(
+        ui,
+        Rect::from_center_size(tile.center(), Vec2::splat(bounds * zoom)),
+        &p.crosshair,
+        zoom,
+    );
 
     let text_x = rect.left() + 12.0;
     let base_y = tile.bottom() + 10.0;
@@ -346,7 +357,7 @@ fn card(ui: &mut egui::Ui, p: &Preset, actions: &mut Vec<Action>) {
 
     // Favorite star, top-right of the tile.
     let star_rect = Rect::from_min_size(Pos2::new(tile.right() - 28.0, tile.top() + 6.0), Vec2::splat(22.0));
-    let star = ui.interact(star_rect, Id::new(("preset_fav", &p.id)), Sense::click());
+    let star = ui.interact(star_rect, ui.scope_id().with(("preset_fav", &p.id)), Sense::click());
     draw_star(&painter, star_rect.center(), 8.5, p.favorite, star.hovered());
     if star.clicked() {
         actions.push(Action::Favorite(p.id.clone()));
@@ -472,7 +483,9 @@ fn handle_action(state: &mut AppState, pu: &mut PresetsUi, action: Action) {
             }
         }
         Action::Duplicate(id) => {
-            let Some(original) = find(state, &id).cloned() else { return };
+            let Some(original) = find(state, &id).cloned() else {
+                return;
+            };
             let fresh = Preset::default();
             let mut copy = original.clone();
             copy.id = fresh.id;
@@ -480,11 +493,18 @@ fn handle_action(state: &mut AppState, pu: &mut PresetsUi, action: Action) {
             copy.name = format!("{} (copy)", original.name);
             copy.builtin = false;
             copy.favorite = false;
-            let pos = state.presets.iter().position(|p| p.id == id).map_or(state.presets.len(), |i| i + 1);
+            let pos = state
+                .presets
+                .iter()
+                .position(|p| p.id == id)
+                .map_or(state.presets.len(), |i| i + 1);
             let name = copy.name.clone();
             state.presets.insert(pos, copy);
             state.dirty = true;
-            state.toast(format!("Created \"{name}\". Built-in presets are copied, not edited."), false);
+            state.toast(
+                format!("Created \"{name}\". Built-in presets are copied, not edited."),
+                false,
+            );
         }
         Action::Export(id) => {
             if let Some(p) = find(state, &id) {
@@ -578,7 +598,9 @@ fn delete_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut PresetsUi) 
         .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
         .show(ctx, |ui| {
             ui.set_width(320.0);
-            ui.label(format!("\"{name}\" will be removed from your library. This cannot be undone."));
+            ui.label(format!(
+                "\"{name}\" will be removed from your library. This cannot be undone."
+            ));
             ui.add_space(10.0);
             ui.horizontal(|ui| {
                 if danger_button(ui, "Delete").clicked() {
@@ -633,7 +655,11 @@ fn meta_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut PresetsUi) {
             });
             ui.add_space(6.0);
             ui.label(muted("Description (optional)"));
-            ui.add(egui::TextEdit::multiline(&mut form.description).desired_rows(3).desired_width(340.0));
+            ui.add(
+                egui::TextEdit::multiline(&mut form.description)
+                    .desired_rows(3)
+                    .desired_width(340.0),
+            );
             ui.add_space(10.0);
             ui.horizontal(|ui| {
                 let valid = !form.name.trim().is_empty();

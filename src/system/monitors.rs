@@ -39,25 +39,37 @@ pub fn build_monitor_list(mut raw: Vec<RawMonitor>) -> Vec<MonitorInfo> {
             width: m.width,
             height: m.height,
             primary: m.primary,
-            scale: if m.scale.is_finite() && m.scale > 0.0 { m.scale } else { 1.0 },
+            scale: if m.scale.is_finite() && m.scale > 0.0 {
+                m.scale
+            } else {
+                1.0
+            },
         })
         .collect()
 }
 
 /// Single 1920x1080 primary display, used when enumeration is unavailable or fails.
 pub fn fallback_monitors() -> Vec<MonitorInfo> {
-    build_monitor_list(vec![RawMonitor { x: 0, y: 0, width: 1920, height: 1080, primary: true, scale: 1.0 }])
+    build_monitor_list(vec![RawMonitor {
+        x: 0,
+        y: 0,
+        width: 1920,
+        height: 1080,
+        primary: true,
+        scale: 1.0,
+    }])
 }
 
 /// Enumerate monitors, primary first.
 #[cfg(windows)]
 pub fn list_monitors() -> Vec<MonitorInfo> {
-    use windows::Win32::Foundation::{BOOL, LPARAM, RECT};
+    use windows::Win32::Foundation::{LPARAM, RECT};
     use windows::Win32::Graphics::Gdi::{
         EnumDisplayMonitors, GetMonitorInfoW, HDC, HMONITOR, MONITORINFO, MONITORINFOEXW,
     };
     use windows::Win32::UI::HiDpi::{GetDpiForMonitor, MDT_EFFECTIVE_DPI};
     use windows::Win32::UI::WindowsAndMessaging::MONITORINFOF_PRIMARY;
+    use windows::core::BOOL;
 
     unsafe extern "system" fn enum_proc(hmon: HMONITOR, _hdc: HDC, _rc: *mut RECT, lparam: LPARAM) -> BOOL {
         // SAFETY: lparam is the `&mut Vec<RawMonitor>` passed by `list_monitors` below, alive for the call.
@@ -92,7 +104,12 @@ pub fn list_monitors() -> Vec<MonitorInfo> {
     let mut raw: Vec<RawMonitor> = Vec::new();
     // SAFETY: `raw` outlives the synchronous enumeration; enum_proc only touches it through lparam.
     let ok = unsafe {
-        EnumDisplayMonitors(None, None, Some(enum_proc), LPARAM(&mut raw as *mut Vec<RawMonitor> as isize))
+        EnumDisplayMonitors(
+            None,
+            None,
+            Some(enum_proc),
+            LPARAM(&mut raw as *mut Vec<RawMonitor> as isize),
+        )
     };
     if !ok.as_bool() || raw.is_empty() {
         tracing::warn!("monitor enumeration returned no displays; using fallback");
@@ -112,7 +129,14 @@ mod tests {
     use super::*;
 
     fn raw(x: i32, y: i32, w: i32, h: i32, primary: bool) -> RawMonitor {
-        RawMonitor { x, y, width: w, height: h, primary, scale: 1.0 }
+        RawMonitor {
+            x,
+            y,
+            width: w,
+            height: h,
+            primary,
+            scale: 1.0,
+        }
     }
 
     #[test]

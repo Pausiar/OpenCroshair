@@ -79,7 +79,14 @@ pub struct PositionSettings {
 }
 impl Default for PositionSettings {
     fn default() -> Self {
-        Self { mode: CenterMode::Monitor, monitor: None, offset_x: 0, offset_y: 0, custom_x: 0, custom_y: 0 }
+        Self {
+            mode: CenterMode::Monitor,
+            monitor: None,
+            offset_x: 0,
+            offset_y: 0,
+            custom_x: 0,
+            custom_y: 0,
+        }
     }
 }
 
@@ -162,7 +169,11 @@ impl Paths {
     /// Self-contained layout below `root` (used by tests and portable setups).
     pub fn from_root(root: impl AsRef<Path>) -> Self {
         let root = root.as_ref();
-        Self { config_dir: root.join("config"), data_dir: root.join("data"), log_dir: root.join("logs") }
+        Self {
+            config_dir: root.join("config"),
+            data_dir: root.join("data"),
+            log_dir: root.join("logs"),
+        }
     }
 
     pub fn settings_file(&self) -> PathBuf {
@@ -244,7 +255,10 @@ fn read_json_file(path: &Path, warnings: &mut Vec<String>) -> Option<Value> {
 
 /// Moves a corrupt file aside as `<name>.corrupt-<unix_ts>` (adding a counter if needed).
 fn quarantine(path: &Path, reason: &str, warnings: &mut Vec<String>) {
-    let name = path.file_name().map(|n| n.to_string_lossy().into_owned()).unwrap_or_default();
+    let name = path
+        .file_name()
+        .map(|n| n.to_string_lossy().into_owned())
+        .unwrap_or_default();
     let ts = unix_now();
     let mut target = path.with_file_name(format!("{name}.corrupt-{ts}"));
     let mut n = 1;
@@ -270,14 +284,19 @@ fn quarantine(path: &Path, reason: &str, warnings: &mut Vec<String>) {
 }
 
 fn unix_now() -> u64 {
-    SystemTime::now().duration_since(UNIX_EPOCH).map(|d| d.as_secs()).unwrap_or(0)
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_secs())
+        .unwrap_or(0)
 }
 
 /// Clamps every settings value into its supported range.
 fn sanitize_settings(s: &mut Settings) {
     s.version = SETTINGS_VERSION;
     validation::clamp(&mut s.active_crosshair);
-    s.detection_interval_ms = s.detection_interval_ms.clamp(MIN_DETECTION_INTERVAL_MS, MAX_DETECTION_INTERVAL_MS);
+    s.detection_interval_ms = s
+        .detection_interval_ms
+        .clamp(MIN_DETECTION_INTERVAL_MS, MAX_DETECTION_INTERVAL_MS);
     s.preview_zoom = if s.preview_zoom.is_finite() {
         s.preview_zoom.clamp(MIN_PREVIEW_ZOOM, MAX_PREVIEW_ZOOM)
     } else {
@@ -351,7 +370,10 @@ fn load_user_presets(paths: &Paths, reserved_ids: &mut HashSet<String>, warnings
         if preset.id.trim().is_empty() {
             preset.id = uuid::Uuid::new_v4().to_string();
         } else if reserved_ids.contains(&preset.id) {
-            warnings.push(format!("Preset '{}' reused an existing id and was given a new one.", preset.name));
+            warnings.push(format!(
+                "Preset '{}' reused an existing id and was given a new one.",
+                preset.name
+            ));
             preset.id = uuid::Uuid::new_v4().to_string();
         }
         reserved_ids.insert(preset.id.clone());
@@ -400,7 +422,12 @@ pub fn load_all(paths: &Paths) -> LoadedData {
     presets.extend(user);
 
     let profiles = load_profiles(paths, &mut warnings);
-    LoadedData { settings, presets, profiles, warnings }
+    LoadedData {
+        settings,
+        presets,
+        profiles,
+        warnings,
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -433,7 +460,11 @@ pub fn write_atomic(path: &Path, bytes: &[u8]) -> io::Result<()> {
     };
     fs::create_dir_all(dir)?;
     let seq = TMP_COUNTER.fetch_add(1, Ordering::Relaxed);
-    let tmp = dir.join(format!(".{}.{}.{seq}.tmp", file_name.to_string_lossy(), std::process::id()));
+    let tmp = dir.join(format!(
+        ".{}.{}.{seq}.tmp",
+        file_name.to_string_lossy(),
+        std::process::id()
+    ));
 
     let result = (|| -> io::Result<()> {
         let mut file = OpenOptions::new().write(true).create_new(true).open(&tmp)?;
@@ -478,7 +509,10 @@ pub fn save_presets(paths: &Paths, presets: &[Preset]) -> io::Result<()> {
 }
 
 pub fn save_profiles(paths: &Paths, profiles: &[GameProfile]) -> io::Result<()> {
-    let file = ProfilesFile { version: PROFILES_VERSION, profiles };
+    let file = ProfilesFile {
+        version: PROFILES_VERSION,
+        profiles,
+    };
     let bytes = serde_json::to_vec_pretty(&file).map_err(io::Error::other)?;
     write_atomic(&paths.profiles_file(), &bytes)
 }
@@ -540,7 +574,11 @@ impl SaveWorker {
                 None
             }
         };
-        Self { tx: Some(tx), handle, errors }
+        Self {
+            tx: Some(tx),
+            handle,
+            errors,
+        }
     }
 
     /// Queues a job. Never blocks on disk I/O.
@@ -550,7 +588,10 @@ impl SaveWorker {
             None => false,
         };
         if !sent {
-            push_error(&self.errors, "Changes could not be saved because the save thread stopped.".into());
+            push_error(
+                &self.errors,
+                "Changes could not be saved because the save thread stopped.".into(),
+            );
         }
     }
 
@@ -651,14 +692,23 @@ mod tests {
     }
 
     fn user_preset(id: &str, name: &str) -> Preset {
-        Preset { id: id.into(), name: name.into(), ..Preset::default() }
+        Preset {
+            id: id.into(),
+            name: name.into(),
+            ..Preset::default()
+        }
     }
 
     fn quarantined_files(dir: &Path, base: &str) -> Vec<PathBuf> {
         fs::read_dir(dir)
             .unwrap()
             .map(|e| e.unwrap().path())
-            .filter(|p| p.file_name().unwrap().to_string_lossy().starts_with(&format!("{base}.corrupt-")))
+            .filter(|p| {
+                p.file_name()
+                    .unwrap()
+                    .to_string_lossy()
+                    .starts_with(&format!("{base}.corrupt-"))
+            })
             .collect()
     }
 
@@ -754,7 +804,10 @@ mod tests {
 
     #[test]
     fn non_finite_zoom_falls_back_to_default() {
-        let mut settings = Settings { preview_zoom: f32::NAN, ..Settings::default() };
+        let mut settings = Settings {
+            preview_zoom: f32::NAN,
+            ..Settings::default()
+        };
         sanitize_settings(&mut settings);
         assert_eq!(settings.preview_zoom, DEFAULT_PREVIEW_ZOOM);
         settings.preview_zoom = f32::INFINITY;
@@ -842,7 +895,13 @@ mod tests {
     #[test]
     fn profiles_round_trip() {
         let (_dir, paths) = temp_paths();
-        let profile = GameProfile { id: "pr1".into(), name: "CS2".into(), exe: "cs2.exe".into(), preset_id: Some("x".into()), enabled: false };
+        let profile = GameProfile {
+            id: "pr1".into(),
+            name: "CS2".into(),
+            exe: "cs2.exe".into(),
+            preset_id: Some("x".into()),
+            enabled: false,
+        };
         save_profiles(&paths, std::slice::from_ref(&profile)).unwrap();
         let loaded = load_all(&paths);
         assert_eq!(loaded.profiles, vec![profile]);
@@ -865,11 +924,23 @@ mod tests {
         let (_dir, paths) = temp_paths();
         let worker = SaveWorker::spawn(paths.clone());
         for i in 0..50u32 {
-            let settings = Settings { detection_interval_ms: 250 + i, ..Settings::default() };
-            worker.save(SaveJob { settings: Some(settings), ..SaveJob::default() });
+            let settings = Settings {
+                detection_interval_ms: 250 + i,
+                ..Settings::default()
+            };
+            worker.save(SaveJob {
+                settings: Some(settings),
+                ..SaveJob::default()
+            });
         }
-        let last = Settings { detection_interval_ms: 777, ..Settings::default() };
-        worker.save(SaveJob { settings: Some(last), ..SaveJob::default() });
+        let last = Settings {
+            detection_interval_ms: 777,
+            ..Settings::default()
+        };
+        worker.save(SaveJob {
+            settings: Some(last),
+            ..SaveJob::default()
+        });
         drop(worker);
 
         let loaded = load_all(&paths);
@@ -880,7 +951,10 @@ mod tests {
     fn save_worker_flush_makes_writes_visible() {
         let (_dir, paths) = temp_paths();
         let worker = SaveWorker::spawn(paths.clone());
-        worker.save(SaveJob { profiles: Some(vec![GameProfile::default()]), ..SaveJob::default() });
+        worker.save(SaveJob {
+            profiles: Some(vec![GameProfile::default()]),
+            ..SaveJob::default()
+        });
         worker.flush();
         assert!(paths.profiles_file().exists());
         assert!(worker.take_errors().is_empty());
@@ -892,7 +966,10 @@ mod tests {
         // Make the data directory a regular file so writes below it fail.
         fs::write(dir.path().join("data"), "blocker").unwrap();
         let worker = SaveWorker::spawn(paths);
-        worker.save(SaveJob { presets: Some(vec![user_preset("a", "A")]), ..SaveJob::default() });
+        worker.save(SaveJob {
+            presets: Some(vec![user_preset("a", "A")]),
+            ..SaveJob::default()
+        });
         worker.flush();
         let errors = worker.take_errors();
         assert_eq!(errors.len(), 1, "errors: {errors:?}");

@@ -130,10 +130,22 @@ impl PresetEntry {
     fn into_preset(self) -> Preset {
         let name = self.name.trim();
         Preset {
-            id: if self.id.trim().is_empty() { uuid::Uuid::new_v4().to_string() } else { self.id },
-            name: if name.is_empty() { DEFAULT_IMPORT_NAME.to_string() } else { name.to_string() },
+            id: if self.id.trim().is_empty() {
+                uuid::Uuid::new_v4().to_string()
+            } else {
+                self.id
+            },
+            name: if name.is_empty() {
+                DEFAULT_IMPORT_NAME.to_string()
+            } else {
+                name.to_string()
+            },
             description: self.description,
-            category: if self.category.trim().is_empty() { "Custom".into() } else { self.category },
+            category: if self.category.trim().is_empty() {
+                "Custom".into()
+            } else {
+                self.category
+            },
             created_at: self.created_at,
             favorite: self.favorite,
             builtin: false,
@@ -174,7 +186,9 @@ pub fn parse_import(input: &str) -> Result<ImportedData, ImportError> {
 /// Parses and validates an export document with the given options.
 pub fn parse_import_with(input: &str, options: ImportOptions) -> Result<ImportedData, ImportError> {
     if input.len() as u64 > MAX_IMPORT_BYTES {
-        return Err(ImportError::TooLarge { limit: MAX_IMPORT_BYTES });
+        return Err(ImportError::TooLarge {
+            limit: MAX_IMPORT_BYTES,
+        });
     }
     let root: Value = serde_json::from_str(input).map_err(|e| ImportError::NotJson(e.to_string()))?;
     let Value::Object(obj) = &root else {
@@ -292,7 +306,11 @@ fn finish(
     if presets.is_empty() {
         return Err(ImportError::Empty);
     }
-    Ok(ImportedData { kind, presets, warnings: std::mem::take(warnings) })
+    Ok(ImportedData {
+        kind,
+        presets,
+        warnings: std::mem::take(warnings),
+    })
 }
 
 /// Adds `imported` presets to `existing` without overwriting anything. A preset whose id or name
@@ -353,7 +371,9 @@ pub fn import_from_file(path: &Path) -> Result<ImportedData, ImportError> {
 pub fn import_from_file_with(path: &Path, options: ImportOptions) -> Result<ImportedData, ImportError> {
     let meta = fs::metadata(path).map_err(|e| ImportError::Io(e.to_string()))?;
     if meta.len() > MAX_IMPORT_BYTES {
-        return Err(ImportError::TooLarge { limit: MAX_IMPORT_BYTES });
+        return Err(ImportError::TooLarge {
+            limit: MAX_IMPORT_BYTES,
+        });
     }
     let bytes = fs::read(path).map_err(|e| ImportError::Io(e.to_string()))?;
     let text = std::str::from_utf8(&bytes).map_err(|e| ImportError::NotJson(e.to_string()))?;
@@ -367,14 +387,20 @@ mod tests {
     use tempfile::TempDir;
 
     fn preset(name: &str) -> Preset {
-        let mut p = Preset { name: name.into(), ..Preset::default() };
+        let mut p = Preset {
+            name: name.into(),
+            ..Preset::default()
+        };
         p.crosshair.color = Rgba::rgb(10, 20, 30);
         p.crosshair.gap = 7.0;
         p
     }
 
     fn out_of_range_crosshair() -> Crosshair {
-        Crosshair { length_h: limits::MAX_LENGTH * 50.0, ..Crosshair::default() }
+        Crosshair {
+            length_h: limits::MAX_LENGTH * 50.0,
+            ..Crosshair::default()
+        }
     }
 
     fn invalid_messages(err: ImportError) -> Vec<String> {
@@ -438,18 +464,33 @@ mod tests {
 
     #[test]
     fn out_of_range_values_are_rejected_with_field_names() {
-        let p = Preset { crosshair: out_of_range_crosshair(), ..preset("Wide") };
+        let p = Preset {
+            crosshair: out_of_range_crosshair(),
+            ..preset("Wide")
+        };
         let messages = invalid_messages(parse_import(&export_crosshair(&p)).unwrap_err());
         assert!(!messages.is_empty());
-        assert!(messages.iter().any(|m| m.contains("length_h")), "messages: {messages:?}");
+        assert!(
+            messages.iter().any(|m| m.contains("length_h")),
+            "messages: {messages:?}"
+        );
         assert!(messages.iter().all(|m| m.contains("Wide")));
     }
 
     #[test]
     fn out_of_range_values_are_clamped_when_requested() {
-        let p = Preset { crosshair: out_of_range_crosshair(), ..preset("Wide") };
+        let p = Preset {
+            crosshair: out_of_range_crosshair(),
+            ..preset("Wide")
+        };
         let text = export_crosshair(&p);
-        let imported = parse_import_with(&text, ImportOptions { clamp_out_of_range: true }).expect("clamped import");
+        let imported = parse_import_with(
+            &text,
+            ImportOptions {
+                clamp_out_of_range: true,
+            },
+        )
+        .expect("clamped import");
         assert!(imported.presets[0].crosshair.length_h <= limits::MAX_LENGTH);
         assert_eq!(imported.warnings.len(), 1);
         assert!(imported.warnings[0].contains("length_h"));
@@ -463,7 +504,10 @@ mod tests {
 
     #[test]
     fn missing_format_without_crosshair_fields_is_rejected() {
-        assert!(matches!(parse_import(r#"{"hello":1}"#), Err(ImportError::WrongFormat(_))));
+        assert!(matches!(
+            parse_import(r#"{"hello":1}"#),
+            Err(ImportError::WrongFormat(_))
+        ));
         assert!(matches!(parse_import("[1,2,3]"), Err(ImportError::WrongFormat(_))));
     }
 
@@ -478,7 +522,10 @@ mod tests {
         let text = r#"{"format":"opencrosshair","kind":"collection","version":2,"presets":[]}"#;
         assert_eq!(
             parse_import(text).unwrap_err(),
-            ImportError::UnsupportedVersion { found: 2, max: FORMAT_VERSION }
+            ImportError::UnsupportedVersion {
+                found: 2,
+                max: FORMAT_VERSION
+            }
         );
         let missing = r#"{"format":"opencrosshair","kind":"collection","presets":[]}"#;
         assert!(matches!(parse_import(missing), Err(ImportError::WrongFormat(_))));
@@ -522,17 +569,36 @@ mod tests {
     #[test]
     fn oversized_text_is_rejected() {
         let text = " ".repeat(MAX_IMPORT_BYTES as usize + 1);
-        assert_eq!(parse_import(&text).unwrap_err(), ImportError::TooLarge { limit: MAX_IMPORT_BYTES });
+        assert_eq!(
+            parse_import(&text).unwrap_err(),
+            ImportError::TooLarge {
+                limit: MAX_IMPORT_BYTES
+            }
+        );
     }
 
     #[test]
     fn merge_never_overwrites_existing_or_builtin_presets() {
-        let builtin = Preset { id: "builtin-classic".into(), name: "Classic".into(), builtin: true, ..Preset::default() };
+        let builtin = Preset {
+            id: "builtin-classic".into(),
+            name: "Classic".into(),
+            builtin: true,
+            ..Preset::default()
+        };
         let alpha = preset("Alpha");
         let mut existing = vec![builtin.clone(), alpha.clone()];
 
-        let same_id_other_name = Preset { id: alpha.id.clone(), name: "Different".into(), ..preset("x") };
-        let builtin_clash = Preset { id: "builtin-classic".into(), name: "Classic".into(), crosshair: out_of_range_crosshair(), ..Preset::default() };
+        let same_id_other_name = Preset {
+            id: alpha.id.clone(),
+            name: "Different".into(),
+            ..preset("x")
+        };
+        let builtin_clash = Preset {
+            id: "builtin-classic".into(),
+            name: "Classic".into(),
+            crosshair: out_of_range_crosshair(),
+            ..Preset::default()
+        };
         let fresh = preset("Gamma");
         let imported = vec![same_id_other_name.clone(), builtin_clash.clone(), fresh.clone()];
 
@@ -582,12 +648,20 @@ mod tests {
         let dir = TempDir::new().unwrap();
         let path = dir.path().join("big.json");
         fs::write(&path, vec![b' '; MAX_IMPORT_BYTES as usize + 1]).unwrap();
-        assert_eq!(import_from_file(&path).unwrap_err(), ImportError::TooLarge { limit: MAX_IMPORT_BYTES });
+        assert_eq!(
+            import_from_file(&path).unwrap_err(),
+            ImportError::TooLarge {
+                limit: MAX_IMPORT_BYTES
+            }
+        );
     }
 
     #[test]
     fn import_from_missing_file_reports_io() {
         let dir = TempDir::new().unwrap();
-        assert!(matches!(import_from_file(&dir.path().join("nope.json")), Err(ImportError::Io(_))));
+        assert!(matches!(
+            import_from_file(&dir.path().join("nope.json")),
+            Err(ImportError::Io(_))
+        ));
     }
 }

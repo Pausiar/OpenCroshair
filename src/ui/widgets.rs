@@ -13,8 +13,8 @@ use crate::crosshair::model::Crosshair;
 use crate::crosshair::renderer;
 use crate::ui::theme::{self, BLUE, BLUE_LIGHT, BORDER, PREVIEW_DARK, PREVIEW_LIGHT, SURFACE, SURFACE2, TEXT, TEXT2};
 use eframe::egui::{
-    self, Align, Color32, CursorIcon, FontFamily, FontId, Layout, Margin, Pos2, Rect, Response, RichText, Sense,
-    Shape, Stroke, StrokeKind, TextureHandle, TextureOptions, Ui, Vec2,
+    self, Align, Color32, CursorIcon, FontFamily, FontId, Layout, Margin, Pos2, Rect, Response, RichText, Sense, Shape,
+    Stroke, StrokeKind, TextureHandle, TextureOptions, Ui, Vec2,
 };
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
@@ -40,10 +40,8 @@ pub fn paint_crosshair(ui: &mut Ui, rect: Rect, c: &Crosshair, zoom: f32) {
         Some(h) => h,
         None => {
             let bmp = renderer::render(c, zoom);
-            let image = egui::ColorImage::from_rgba_premultiplied(
-                [bmp.width as usize, bmp.height as usize],
-                &bmp.pixels,
-            );
+            let image =
+                egui::ColorImage::from_rgba_premultiplied([bmp.width as usize, bmp.height as usize], &bmp.pixels);
             let h = ctx.load_texture(format!("crosshair_{key:x}"), image, TextureOptions::LINEAR);
             ctx.data_mut(|d| {
                 let cache: &mut HashMap<u64, TextureHandle> = d.get_temp_mut_or_default(cache_id);
@@ -77,7 +75,8 @@ fn cache_key(c: &Crosshair, zoom: f32) -> u64 {
 pub fn preview_box(ui: &mut Ui, rect: Rect, dark: bool, c: &Crosshair, zoom: f32) {
     let bg = if dark { PREVIEW_DARK } else { PREVIEW_LIGHT };
     ui.painter().rect_filled(rect, theme::RADIUS_SM, bg);
-    ui.painter().rect_stroke(rect, theme::RADIUS_SM, Stroke::new(1.0, BORDER), StrokeKind::Inside);
+    ui.painter()
+        .rect_stroke(rect, theme::RADIUS_SM, Stroke::new(1.0, BORDER), StrokeKind::Inside);
     paint_crosshair(ui, rect.shrink(8.0), c, zoom);
 }
 
@@ -96,12 +95,7 @@ pub fn card<R>(ui: &mut Ui, add: impl FnOnce(&mut Ui) -> R) -> R {
 }
 
 /// Card with a bold title and optional muted subtitle above the content.
-pub fn titled_card<R>(
-    ui: &mut Ui,
-    title: &str,
-    subtitle: Option<&str>,
-    add: impl FnOnce(&mut Ui) -> R,
-) -> R {
+pub fn titled_card<R>(ui: &mut Ui, title: &str, subtitle: Option<&str>, add: impl FnOnce(&mut Ui) -> R) -> R {
     card(ui, |ui| {
         ui.label(RichText::new(title).size(15.0).strong().color(TEXT));
         if let Some(s) = subtitle {
@@ -172,9 +166,17 @@ pub fn toggle_switch(ui: &mut Ui, on: &mut bool) -> Response {
         let p = ui.painter();
         let bg = lerp_color(SURFACE2, BLUE, t);
         p.rect_filled(rect, rect.height() / 2.0, bg);
-        p.rect_stroke(rect, rect.height() / 2.0, Stroke::new(1.0, lerp_color(BORDER, BLUE_LIGHT, t)), StrokeKind::Inside);
+        p.rect_stroke(
+            rect,
+            rect.height() / 2.0,
+            Stroke::new(1.0, lerp_color(BORDER, BLUE_LIGHT, t)),
+            StrokeKind::Inside,
+        );
         let r = rect.height() / 2.0 - 3.0;
-        let x = egui::lerp((rect.left() + rect.height() / 2.0)..=(rect.right() - rect.height() / 2.0), t);
+        let x = egui::lerp(
+            (rect.left() + rect.height() / 2.0)..=(rect.right() - rect.height() / 2.0),
+            t,
+        );
         p.circle_filled(Pos2::new(x, rect.center().y), r, Color32::WHITE);
     }
     resp
@@ -233,7 +235,11 @@ pub fn key_chip(ui: &mut Ui, text: &str) {
         .corner_radius(4.0)
         .inner_margin(Margin::symmetric(7, 2))
         .show(ui, |ui| {
-            ui.label(RichText::new(text).font(FontId::new(12.0, FontFamily::Monospace)).color(TEXT));
+            ui.label(
+                RichText::new(text)
+                    .font(FontId::new(12.0, FontFamily::Monospace))
+                    .color(TEXT),
+            );
         });
 }
 

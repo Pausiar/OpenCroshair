@@ -47,8 +47,9 @@ impl AppState {
             crosshair: self.settings.active_crosshair.clone(),
             position: self.settings.position.clone(),
         });
-        self.overlay
-            .send(OverlayCommand::SetVisible(self.settings.overlay_enabled && self.settings.crosshair_visible));
+        self.overlay.send(OverlayCommand::SetVisible(
+            self.settings.overlay_enabled && self.settings.crosshair_visible,
+        ));
     }
     /// Make `preset` the active crosshair (also loads it into the editor), updates recents, pushes overlay.
     pub fn apply_preset(&mut self, id: &str) {

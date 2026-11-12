@@ -4,7 +4,7 @@
 //! OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION) and QueryFullProcessImageNameW.
 //! No memory access, injection or hooking. Non-Windows builds return nothing.
 
-use std::sync::mpsc::{self, Receiver, TryRecvError};
+use std::sync::mpsc::{self, Receiver};
 use std::sync::{Arc, Condvar, Mutex, MutexGuard, PoisonError};
 use std::thread::JoinHandle;
 use std::time::Duration;
@@ -136,10 +136,7 @@ impl Detector {
 
     /// Non-blocking receive of the next pending event.
     pub fn try_recv(&self) -> Option<DetectionEvent> {
-        match self.rx.try_recv() {
-            Ok(ev) => Some(ev),
-            Err(TryRecvError::Empty | TryRecvError::Disconnected) => None,
-        }
+        self.rx.try_recv().ok()
     }
 }
 

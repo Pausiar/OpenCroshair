@@ -65,7 +65,12 @@ fn selected_monitor(monitors: &[MonitorInfo], idx: Option<usize>) -> MonitorInfo
 }
 
 fn monitor_rect(m: &MonitorInfo) -> Rect {
-    Rect { x: m.x, y: m.y, w: m.width, h: m.height }
+    Rect {
+        x: m.x,
+        y: m.y,
+        w: m.width,
+        h: m.height,
+    }
 }
 
 /// Anchor point (crosshair centre) before crosshair/position offsets are applied.
@@ -86,8 +91,14 @@ fn anchor_point(monitors: &[MonitorInfo], game_rect: Option<Rect>, pos: &Positio
 pub fn dpi_scale_for(monitors: &[MonitorInfo], game_rect: Option<Rect>, pos: &PositionSettings) -> f32 {
     let (ax, ay) = anchor_point(monitors, game_rect, pos);
     let containing = monitors.iter().find(|m| monitor_rect(m).contains(ax, ay));
-    let chosen = containing.cloned().unwrap_or_else(|| selected_monitor(monitors, pos.monitor));
-    if chosen.scale.is_finite() && chosen.scale > 0.0 { chosen.scale } else { 1.0 }
+    let chosen = containing
+        .cloned()
+        .unwrap_or_else(|| selected_monitor(monitors, pos.monitor));
+    if chosen.scale.is_finite() && chosen.scale > 0.0 {
+        chosen.scale
+    } else {
+        1.0
+    }
 }
 
 /// Top-left window position (physical px) for a bitmap of `bitmap_w` x `bitmap_h`, at 1x
@@ -150,7 +161,12 @@ pub fn foreground_window_rect() -> Option<Rect> {
         return None;
     }
     let (l, t, r, b) = windows_api::window_rect(hwnd)?;
-    let rect = Rect { x: l, y: t, w: r.saturating_sub(l), h: b.saturating_sub(t) };
+    let rect = Rect {
+        x: l,
+        y: t,
+        w: r.saturating_sub(l),
+        h: b.saturating_sub(t),
+    };
     rect.is_valid().then_some(rect)
 }
 
@@ -182,7 +198,10 @@ mod tests {
     }
 
     fn pos(mode: CenterMode) -> PositionSettings {
-        PositionSettings { mode, ..PositionSettings::default() }
+        PositionSettings {
+            mode,
+            ..PositionSettings::default()
+        }
     }
 
     fn ch() -> Crosshair {
@@ -223,7 +242,10 @@ mod tests {
 
     #[test]
     fn none_monitor_uses_primary_even_if_listed_later() {
-        let mons = vec![mon(0, -1920, -200, 1920, 1080, false, 1.0), mon(1, 0, 0, 1920, 1080, true, 1.0)];
+        let mons = vec![
+            mon(0, -1920, -200, 1920, 1080, false, 1.0),
+            mon(1, 0, 0, 1920, 1080, true, 1.0),
+        ];
         let p = pos(CenterMode::Monitor);
         assert_eq!(compute_position(&mons, None, &p, &ch(), 101, 101), (910, 490));
     }
@@ -237,7 +259,10 @@ mod tests {
 
     #[test]
     fn negative_coordinate_monitor_left_of_and_above_primary() {
-        let mons = vec![mon(0, 0, 0, 1920, 1080, true, 1.0), mon(1, -1920, -200, 1920, 1080, false, 1.0)];
+        let mons = vec![
+            mon(0, 0, 0, 1920, 1080, true, 1.0),
+            mon(1, -1920, -200, 1920, 1080, false, 1.0),
+        ];
         let mut p = pos(CenterMode::Monitor);
         p.monitor = Some(1);
         // centre (-960, 340)
@@ -249,7 +274,10 @@ mod tests {
         let mut p = pos(CenterMode::Monitor);
         p.offset_x = 10;
         p.offset_y = -5;
-        assert_eq!(compute_position_scaled(&single(), None, &p, &ch(), 101, 101, 2.0), (920, 485));
+        assert_eq!(
+            compute_position_scaled(&single(), None, &p, &ch(), 101, 101, 2.0),
+            (920, 485)
+        );
     }
 
     #[test]
@@ -257,7 +285,10 @@ mod tests {
         let mut c = ch();
         c.offset_x = 3.0;
         c.offset_y = -4.0;
-        assert_eq!(compute_position(&single(), None, &pos(CenterMode::Monitor), &c, 101, 101), (913, 486));
+        assert_eq!(
+            compute_position(&single(), None, &pos(CenterMode::Monitor), &c, 101, 101),
+            (913, 486)
+        );
     }
 
     #[test]
@@ -296,12 +327,20 @@ mod tests {
         p.offset_y = 30;
         let mut c = ch();
         c.offset_x = 5.0;
-        assert_eq!(compute_position(&single(), None, &p, &c, 11, 11), (100 - 20 + 5 - 5, 100 + 30 - 5));
+        assert_eq!(
+            compute_position(&single(), None, &p, &c, 11, 11),
+            (100 - 20 + 5 - 5, 100 + 30 - 5)
+        );
     }
 
     #[test]
     fn game_window_centres_on_valid_rect() {
-        let r = Rect { x: 100, y: 200, w: 800, h: 600 };
+        let r = Rect {
+            x: 100,
+            y: 200,
+            w: 800,
+            h: 600,
+        };
         let p = pos(CenterMode::GameWindow);
         // centre (500, 500)
         assert_eq!(compute_position(&single(), Some(r), &p, &ch(), 101, 101), (450, 450));
@@ -309,7 +348,12 @@ mod tests {
 
     #[test]
     fn game_window_on_negative_monitor_rect() {
-        let r = Rect { x: -2400, y: -300, w: 1280, h: 720 };
+        let r = Rect {
+            x: -2400,
+            y: -300,
+            w: 1280,
+            h: 720,
+        };
         let p = pos(CenterMode::GameWindow);
         // centre (-1760, 60)
         assert_eq!(compute_position(&single(), Some(r), &p, &ch(), 101, 101), (-1810, 10));
@@ -324,19 +368,41 @@ mod tests {
     #[test]
     fn game_window_zero_size_rect_falls_back_to_monitor() {
         let p = pos(CenterMode::GameWindow);
-        let zero_w = Rect { x: 100, y: 100, w: 0, h: 600 };
-        let neg_h = Rect { x: 100, y: 100, w: 600, h: -1 };
-        assert_eq!(compute_position(&single(), Some(zero_w), &p, &ch(), 101, 101), (910, 490));
-        assert_eq!(compute_position(&single(), Some(neg_h), &p, &ch(), 101, 101), (910, 490));
+        let zero_w = Rect {
+            x: 100,
+            y: 100,
+            w: 0,
+            h: 600,
+        };
+        let neg_h = Rect {
+            x: 100,
+            y: 100,
+            w: 600,
+            h: -1,
+        };
+        assert_eq!(
+            compute_position(&single(), Some(zero_w), &p, &ch(), 101, 101),
+            (910, 490)
+        );
+        assert_eq!(
+            compute_position(&single(), Some(neg_h), &p, &ch(), 101, 101),
+            (910, 490)
+        );
     }
 
     #[test]
     fn game_window_fallback_uses_selected_monitor() {
-        let mons = vec![mon(0, 0, 0, 1920, 1080, true, 1.0), mon(1, 1920, 0, 2560, 1440, false, 1.0)];
+        let mons = vec![
+            mon(0, 0, 0, 1920, 1080, true, 1.0),
+            mon(1, 1920, 0, 2560, 1440, false, 1.0),
+        ];
         let mut p = pos(CenterMode::GameWindow);
         p.monitor = Some(1);
         // centre (1920 + 1280, 720)
-        assert_eq!(compute_position(&mons, None, &p, &ch(), 101, 101), (3200 - 50, 720 - 50));
+        assert_eq!(
+            compute_position(&mons, None, &p, &ch(), 101, 101),
+            (3200 - 50, 720 - 50)
+        );
     }
 
     #[test]
@@ -362,7 +428,10 @@ mod tests {
 
     #[test]
     fn dpi_scale_follows_anchor_monitor() {
-        let mons = vec![mon(0, 0, 0, 1920, 1080, true, 1.0), mon(1, 1920, 0, 2560, 1440, false, 2.0)];
+        let mons = vec![
+            mon(0, 0, 0, 1920, 1080, true, 1.0),
+            mon(1, 1920, 0, 2560, 1440, false, 2.0),
+        ];
         let mut p = pos(CenterMode::Monitor);
         p.monitor = Some(1);
         assert_eq!(dpi_scale_for(&mons, None, &p), 2.0);
@@ -372,9 +441,17 @@ mod tests {
 
     #[test]
     fn dpi_scale_uses_game_rect_monitor() {
-        let mons = vec![mon(0, 0, 0, 1920, 1080, true, 1.0), mon(1, 1920, 0, 2560, 1440, false, 1.5)];
+        let mons = vec![
+            mon(0, 0, 0, 1920, 1080, true, 1.0),
+            mon(1, 1920, 0, 2560, 1440, false, 1.5),
+        ];
         let p = pos(CenterMode::GameWindow);
-        let on_second = Rect { x: 2000, y: 100, w: 800, h: 600 };
+        let on_second = Rect {
+            x: 2000,
+            y: 100,
+            w: 800,
+            h: 600,
+        };
         assert_eq!(dpi_scale_for(&mons, Some(on_second), &p), 1.5);
         assert_eq!(dpi_scale_for(&mons, None, &p), 1.0);
     }
@@ -396,7 +473,12 @@ mod tests {
 
     #[test]
     fn rect_helpers() {
-        let r = Rect { x: -10, y: -20, w: 30, h: 40 };
+        let r = Rect {
+            x: -10,
+            y: -20,
+            w: 30,
+            h: 40,
+        };
         assert!(r.is_valid());
         assert_eq!(r.center(), (5, 0));
         assert!(r.contains(-10, -20));

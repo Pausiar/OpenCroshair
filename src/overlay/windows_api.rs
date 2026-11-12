@@ -5,6 +5,7 @@
 //! no hooking of other processes, no memory access.
 #![cfg(windows)]
 
+use std::ffi::c_void;
 use std::sync::Once;
 use std::sync::atomic::{AtomicIsize, AtomicU32, Ordering};
 
@@ -15,17 +16,46 @@ use windows::Win32::Graphics::Gdi::{
 };
 use windows::Win32::System::LibraryLoader::GetModuleHandleW;
 use windows::Win32::System::Threading::{GetCurrentProcessId, GetCurrentThreadId};
-use windows::Win32::UI::Accessibility::{HWINEVENTHOOK, SetWinEventHook, UnhookWinEvent, WINEVENTPROC};
 use windows::Win32::UI::HiDpi::{DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2, SetProcessDpiAwarenessContext};
 use windows::Win32::UI::WindowsAndMessaging::{
     CreateWindowExW, DefWindowProcW, DestroyWindow, GetForegroundWindow, GetWindowRect, GetWindowThreadProcessId,
     HWND_TOPMOST, IsIconic, IsWindowVisible, KillTimer, MSG, PM_NOREMOVE, PeekMessageW, PostThreadMessageW,
-    RegisterClassExW, SET_WINDOW_POS_FLAGS, SetTimer, SetWindowPos, ShowWindow, SW_HIDE, SW_SHOWNOACTIVATE,
-    SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE, UnregisterClassW, ULW_ALPHA, UpdateLayeredWindow, WINEVENT_OUTOFCONTEXT,
-    WINEVENT_SKIPOWNPROCESS, WM_APP, WM_DISPLAYCHANGE, WM_DPICHANGED, WNDCLASSEXW, WS_EX_LAYERED, WS_EX_NOACTIVATE,
-    WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_POPUP,
+    RegisterClassExW, SET_WINDOW_POS_FLAGS, SW_HIDE, SW_SHOWNOACTIVATE, SWP_NOACTIVATE, SWP_NOMOVE, SWP_NOSIZE,
+    SetTimer, SetWindowPos, ShowWindow, ULW_ALPHA, UnregisterClassW, UpdateLayeredWindow, WM_APP, WM_DISPLAYCHANGE,
+    WM_DPICHANGED, WNDCLASSEXW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST, WS_EX_TRANSPARENT,
+    WS_POPUP,
 };
 use windows::core::{PCWSTR, w};
+
+/// Opaque `HWINEVENTHOOK`. Declared locally because the `Win32_UI_Accessibility` feature (which
+/// provides the crate's binding) is not enabled in Cargo.toml. ABI-identical: pointer-sized,
+/// transparent over `*mut c_void`.
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct HookHandle(pub *mut c_void);
+
+impl HookHandle {
+    fn is_invalid(self) -> bool {
+        self.0.is_null()
+    }
+}
+
+/// `WINEVENTPROC`.
+pub type WinEventProc = Option<unsafe extern "system" fn(HookHandle, u32, HWND, i32, i32, u32, u32)>;
+
+#[link(name = "user32")]
+unsafe extern "system" {
+    fn SetWinEventHook(
+        eventmin: u32,
+        eventmax: u32,
+        hmodwineventproc: *mut c_void,
+        pfnwineventproc: WinEventProc,
+        idprocess: u32,
+        idthread: u32,
+        dwflags: u32,
+    ) -> HookHandle;
+    fn UnhookWinEvent(hwineventhook: HookHandle) -> windows::core::BOOL;
+}
 
 /// Commands were queued on the mpsc channel; drain it.
 pub const WM_APP_COMMAND: u32 = WM_APP + 1;
@@ -172,7 +202,10 @@ pub fn set_topmost(hwnd: HWND) {
 /// Present `surface` at (x,y) in physical virtual-desktop coordinates with per-pixel alpha.
 pub fn update_layered(hwnd: HWND, x: i32, y: i32, surface: &Surface) -> Result<(), String> {
     let dst = POINT { x, y };
-    let size = SIZE { cx: surface.width as i32, cy: surface.height as i32 };
+    let size = SIZE {
+        cx: surface.width as i32,
+        cy: surface.height as i32,
+    };
     let src = POINT { x: 0, y: 0 };
     let blend = BLENDFUNCTION {
         BlendOp: AC_SRC_OVER as u8,
@@ -245,7 +278,14 @@ impl Surface {
                 return Err("CreateDIBSection returned no pixel buffer".into());
             }
             let previous = SelectObject(dc, HGDIOBJ::from(bitmap));
-            Ok(Self { dc, bitmap, previous, bits: bits as *mut u8, width, height })
+            Ok(Self {
+                dc,
+                bitmap,
+                previous,
+                bits: bits as *mut u8,
+                width,
+                height,
+            })
         }
     }
 
@@ -256,7 +296,6 @@ impl Surface {
         // &mut self guarantees exclusive access.
         unsafe { std::slice::from_raw_parts_mut(self.bits, len) }
     }
-
 }
 
 impl Drop for Surface {
@@ -313,15 +352,25 @@ pub fn is_overlay_window(hwnd: HWND) -> bool {
 
 /// Install an out-of-context WinEvent hook delivered to the calling thread's message queue.
 /// Returns None on failure.
-pub fn install_win_event_hook(event: u32, proc: WINEVENTPROC) -> Option<HWINEVENTHOOK> {
+pub fn install_win_event_hook(event: u32, proc: WinEventProc) -> Option<HookHandle> {
+    const WINEVENT_OUTOFCONTEXT: u32 = 0x0000;
+    const WINEVENT_SKIPOWNPROCESS: u32 = 0x0002;
     // SAFETY: out-of-context hooks take no pointers from us; events arrive as messages.
     let h = unsafe {
-        SetWinEventHook(event, event, None, proc, 0, 0, WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS)
+        SetWinEventHook(
+            event,
+            event,
+            std::ptr::null_mut(),
+            proc,
+            0,
+            0,
+            WINEVENT_OUTOFCONTEXT | WINEVENT_SKIPOWNPROCESS,
+        )
     };
     (!h.is_invalid()).then_some(h)
 }
 
-pub fn unhook_win_event(h: HWINEVENTHOOK) {
+pub fn unhook_win_event(h: HookHandle) {
     // SAFETY: h came from install_win_event_hook on this thread.
     let _ = unsafe { UnhookWinEvent(h) };
 }

@@ -46,12 +46,15 @@ fn main() -> eframe::Result {
     };
 
     let launched_minimized = std::env::args().any(|a| a == "--minimized");
-    let paths = Paths::resolve()
-        .unwrap_or_else(|| Paths::from_root(std::env::temp_dir().join("OpenCrosshair")));
+    let paths = Paths::resolve().unwrap_or_else(|| Paths::from_root(std::env::temp_dir().join("OpenCrosshair")));
 
     let logging_warning = match storage::init_logging(&paths) {
         Ok(path) => {
-            tracing::info!("OpenCrosshair {} starting (log: {})", env!("CARGO_PKG_VERSION"), path.display());
+            tracing::info!(
+                "OpenCrosshair {} starting (log: {})",
+                env!("CARGO_PKG_VERSION"),
+                path.display()
+            );
             None
         }
         Err(e) => Some(format!("Logging is disabled: {e}")),
