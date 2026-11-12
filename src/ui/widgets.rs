@@ -19,12 +19,18 @@ use eframe::egui::{
 use std::collections::HashMap;
 use std::hash::{Hash, Hasher};
 
+/// Stable egui id for a named piece of UI memory (fixed names only, never per-item).
+pub fn state_id(name: &str) -> egui::Id {
+    #[allow(deprecated)]
+    egui::Id::new(name)
+}
+
 /// Draw the crosshair preview into `rect` (see module docs).
 pub fn paint_crosshair(ui: &mut Ui, rect: Rect, c: &Crosshair, zoom: f32) {
     let zoom = zoom.max(0.1);
     let ctx = ui.ctx().clone();
     let key = cache_key(c, zoom);
-    let cache_id = egui::Id::new("oc_crosshair_texture_cache");
+    let cache_id = state_id("oc_crosshair_texture_cache");
 
     let cached = ctx.data_mut(|d| {
         let cache: &mut HashMap<u64, TextureHandle> = d.get_temp_mut_or_default(cache_id);

@@ -4,8 +4,8 @@ use crate::state::AppState;
 use crate::storage::config::{CenterMode, HotkeySettings, Settings};
 use crate::system::monitors::{self, MonitorInfo};
 use crate::ui::theme::{self, TEXT, TEXT2};
-use crate::ui::widgets::{self};
-use eframe::egui::{self, Align, Id, Layout, RichText, Ui};
+use crate::ui::widgets::{self, state_id};
+use eframe::egui::{self, Align, Layout, RichText, Ui};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 enum Tab {
@@ -45,13 +45,13 @@ const MONITORS_ID: &str = "oc_settings_monitors";
 
 /// Draw the Settings page.
 pub fn show(ui: &mut Ui, state: &mut AppState) {
-    let mut tab: Tab = ui.ctx().data(|d| d.get_temp(Id::new(TAB_ID))).unwrap_or_default();
+    let mut tab: Tab = ui.ctx().data(|d| d.get_temp(state_id(TAB_ID))).unwrap_or_default();
     widgets::page_header(ui, "Settings", "Window, overlay, hotkeys, appearance, detection and startup options.");
     if widgets::segmented(ui, &mut tab, &TABS.map(|(t, l)| (t, l))) {
         // Leaving the hotkey tab cancels any pending capture.
-        ui.ctx().data_mut(|d| d.remove::<Option<&'static str>>(Id::new(CAPTURE_ID)));
+        ui.ctx().data_mut(|d| d.remove::<Option<&'static str>>(state_id(CAPTURE_ID)));
     }
-    ui.ctx().data_mut(|d| d.insert_temp(Id::new(TAB_ID), tab));
+    ui.ctx().data_mut(|d| d.insert_temp(state_id(TAB_ID), tab));
     ui.add_space(12.0);
 
     egui::ScrollArea::vertical().auto_shrink([false, true]).show(ui, |ui| {
@@ -98,21 +98,21 @@ fn general_tab(ui: &mut Ui, state: &mut AppState) {
         |ui| {
             let confirming = ui
                 .ctx()
-                .data(|d| d.get_temp::<bool>(Id::new(CONFIRM_RESET_ID)))
+                .data(|d| d.get_temp::<bool>(state_id(CONFIRM_RESET_ID)))
                 .unwrap_or(false);
             ui.horizontal(|ui| {
                 if !confirming {
                     if widgets::danger_button(ui, "Reset settings to defaults").clicked() {
-                        ui.ctx().data_mut(|d| d.insert_temp(Id::new(CONFIRM_RESET_ID), true));
+                        ui.ctx().data_mut(|d| d.insert_temp(state_id(CONFIRM_RESET_ID), true));
                     }
                 } else {
                     ui.label(RichText::new("Reset all settings?").color(TEXT));
                     if widgets::danger_button(ui, "Confirm reset").clicked() {
                         reset_settings(state);
-                        ui.ctx().data_mut(|d| d.insert_temp(Id::new(CONFIRM_RESET_ID), false));
+                        ui.ctx().data_mut(|d| d.insert_temp(state_id(CONFIRM_RESET_ID), false));
                     }
                     if widgets::secondary_button(ui, "Cancel").clicked() {
-                        ui.ctx().data_mut(|d| d.insert_temp(Id::new(CONFIRM_RESET_ID), false));
+                        ui.ctx().data_mut(|d| d.insert_temp(state_id(CONFIRM_RESET_ID), false));
                     }
                 }
             });
@@ -180,7 +180,7 @@ fn overlay_tab(ui: &mut Ui, state: &mut AppState) {
                             changed = true;
                         }
                         if widgets::secondary_button(ui, "Refresh").clicked() {
-                            ui.ctx().data_mut(|d| d.remove::<Vec<MonitorInfo>>(Id::new(MONITORS_ID)));
+                            ui.ctx().data_mut(|d| d.remove::<Vec<MonitorInfo>>(state_id(MONITORS_ID)));
                         }
                     });
                     ui.add_space(8.0);
@@ -215,7 +215,7 @@ fn overlay_tab(ui: &mut Ui, state: &mut AppState) {
 }
 
 fn cached_monitors(ui: &mut Ui) -> Vec<MonitorInfo> {
-    let id = Id::new(MONITORS_ID);
+    let id = state_id(MONITORS_ID);
     if let Some(list) = ui.ctx().data(|d| d.get_temp::<Vec<MonitorInfo>>(id)) {
         return list;
     }
@@ -268,7 +268,7 @@ fn hotkey_field<'a>(h: &'a HotkeySettings, key: &str) -> &'a str {
 }
 
 fn hotkeys_tab(ui: &mut Ui, state: &mut AppState) {
-    let capture_id = Id::new(CAPTURE_ID);
+    let capture_id = state_id(CAPTURE_ID);
     let mut capturing: Option<&'static str> =
         ui.ctx().data(|d| d.get_temp::<Option<&'static str>>(capture_id)).flatten();
 

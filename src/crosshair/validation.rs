@@ -1,5 +1,5 @@
 //! Validation and clamping of `Crosshair` values against `model::limits`.
-use super::model::{limits, Crosshair};
+use super::model::{Crosshair, limits};
 
 /// Shadows are drawn down-right only, so the offset is 0..=MAX_SHADOW_OFFSET.
 pub const MAX_SHADOW_OFFSET: f32 = limits::MAX_OUTLINE;
@@ -19,16 +19,43 @@ struct Bounds {
     max: f32,
 }
 
-const LENGTH: Bounds = Bounds { min: 0.0, max: limits::MAX_LENGTH };
-const THICKNESS: Bounds = Bounds { min: 0.0, max: limits::MAX_THICKNESS };
-const GAP: Bounds = Bounds { min: 0.0, max: limits::MAX_GAP };
-const RADIUS: Bounds = Bounds { min: 0.0, max: limits::MAX_RADIUS };
-const DOT: Bounds = Bounds { min: 0.0, max: limits::MAX_DOT };
-const ROTATION: Bounds = Bounds { min: 0.0, max: MAX_ROTATION };
-const OFFSET: Bounds = Bounds { min: -limits::MAX_OFFSET, max: limits::MAX_OFFSET };
+const LENGTH: Bounds = Bounds {
+    min: 0.0,
+    max: limits::MAX_LENGTH,
+};
+const THICKNESS: Bounds = Bounds {
+    min: 0.0,
+    max: limits::MAX_THICKNESS,
+};
+const GAP: Bounds = Bounds {
+    min: 0.0,
+    max: limits::MAX_GAP,
+};
+const RADIUS: Bounds = Bounds {
+    min: 0.0,
+    max: limits::MAX_RADIUS,
+};
+const DOT: Bounds = Bounds {
+    min: 0.0,
+    max: limits::MAX_DOT,
+};
+const ROTATION: Bounds = Bounds {
+    min: 0.0,
+    max: MAX_ROTATION,
+};
+const OFFSET: Bounds = Bounds {
+    min: -limits::MAX_OFFSET,
+    max: limits::MAX_OFFSET,
+};
 const UNIT: Bounds = Bounds { min: 0.0, max: 1.0 };
-const OUTLINE: Bounds = Bounds { min: 0.0, max: limits::MAX_OUTLINE };
-const SHADOW_OFFSET: Bounds = Bounds { min: 0.0, max: MAX_SHADOW_OFFSET };
+const OUTLINE: Bounds = Bounds {
+    min: 0.0,
+    max: limits::MAX_OUTLINE,
+};
+const SHADOW_OFFSET: Bounds = Bounds {
+    min: 0.0,
+    max: MAX_SHADOW_OFFSET,
+};
 
 /// One numeric field of a crosshair with its allowed range and clamp fallback.
 struct FloatField<'a> {
@@ -41,19 +68,84 @@ struct FloatField<'a> {
 /// Every f32 field of `c`. Colors (u8), toggles and the shape enum are always valid.
 fn float_fields<'a>(c: &'a mut Crosshair, d: &Crosshair) -> [FloatField<'a>; 13] {
     [
-        FloatField { name: "length_h", value: &mut c.length_h, bounds: LENGTH, default: d.length_h },
-        FloatField { name: "length_v", value: &mut c.length_v, bounds: LENGTH, default: d.length_v },
-        FloatField { name: "thickness", value: &mut c.thickness, bounds: THICKNESS, default: d.thickness },
-        FloatField { name: "gap", value: &mut c.gap, bounds: GAP, default: d.gap },
-        FloatField { name: "circle_radius", value: &mut c.circle_radius, bounds: RADIUS, default: d.circle_radius },
-        FloatField { name: "dot_size", value: &mut c.dot_size, bounds: DOT, default: d.dot_size },
-        FloatField { name: "rotation", value: &mut c.rotation, bounds: ROTATION, default: d.rotation },
-        FloatField { name: "offset_x", value: &mut c.offset_x, bounds: OFFSET, default: d.offset_x },
-        FloatField { name: "offset_y", value: &mut c.offset_y, bounds: OFFSET, default: d.offset_y },
-        FloatField { name: "opacity", value: &mut c.opacity, bounds: UNIT, default: d.opacity },
-        FloatField { name: "outline_thickness", value: &mut c.outline_thickness, bounds: OUTLINE, default: d.outline_thickness },
-        FloatField { name: "shadow_offset", value: &mut c.shadow_offset, bounds: SHADOW_OFFSET, default: d.shadow_offset },
-        FloatField { name: "shadow_opacity", value: &mut c.shadow_opacity, bounds: UNIT, default: d.shadow_opacity },
+        FloatField {
+            name: "length_h",
+            value: &mut c.length_h,
+            bounds: LENGTH,
+            default: d.length_h,
+        },
+        FloatField {
+            name: "length_v",
+            value: &mut c.length_v,
+            bounds: LENGTH,
+            default: d.length_v,
+        },
+        FloatField {
+            name: "thickness",
+            value: &mut c.thickness,
+            bounds: THICKNESS,
+            default: d.thickness,
+        },
+        FloatField {
+            name: "gap",
+            value: &mut c.gap,
+            bounds: GAP,
+            default: d.gap,
+        },
+        FloatField {
+            name: "circle_radius",
+            value: &mut c.circle_radius,
+            bounds: RADIUS,
+            default: d.circle_radius,
+        },
+        FloatField {
+            name: "dot_size",
+            value: &mut c.dot_size,
+            bounds: DOT,
+            default: d.dot_size,
+        },
+        FloatField {
+            name: "rotation",
+            value: &mut c.rotation,
+            bounds: ROTATION,
+            default: d.rotation,
+        },
+        FloatField {
+            name: "offset_x",
+            value: &mut c.offset_x,
+            bounds: OFFSET,
+            default: d.offset_x,
+        },
+        FloatField {
+            name: "offset_y",
+            value: &mut c.offset_y,
+            bounds: OFFSET,
+            default: d.offset_y,
+        },
+        FloatField {
+            name: "opacity",
+            value: &mut c.opacity,
+            bounds: UNIT,
+            default: d.opacity,
+        },
+        FloatField {
+            name: "outline_thickness",
+            value: &mut c.outline_thickness,
+            bounds: OUTLINE,
+            default: d.outline_thickness,
+        },
+        FloatField {
+            name: "shadow_offset",
+            value: &mut c.shadow_offset,
+            bounds: SHADOW_OFFSET,
+            default: d.shadow_offset,
+        },
+        FloatField {
+            name: "shadow_opacity",
+            value: &mut c.shadow_opacity,
+            bounds: UNIT,
+            default: d.shadow_opacity,
+        },
     ]
 }
 
@@ -64,7 +156,10 @@ pub fn validate(c: &Crosshair) -> Result<(), Vec<ValidationError>> {
     for f in float_fields(&mut copy, &Crosshair::default()) {
         let v = *f.value;
         if !v.is_finite() {
-            errors.push(ValidationError { field: f.name, message: "must be a finite number".into() });
+            errors.push(ValidationError {
+                field: f.name,
+                message: "must be a finite number".into(),
+            });
         } else if v < f.bounds.min || v > f.bounds.max {
             errors.push(ValidationError {
                 field: f.name,
@@ -79,7 +174,11 @@ pub fn validate(c: &Crosshair) -> Result<(), Vec<ValidationError>> {
 pub fn clamp(c: &mut Crosshair) {
     for f in float_fields(c, &Crosshair::default()) {
         let v = *f.value;
-        *f.value = if v.is_nan() { f.default } else { v.clamp(f.bounds.min, f.bounds.max) };
+        *f.value = if v.is_nan() {
+            f.default
+        } else {
+            v.clamp(f.bounds.min, f.bounds.max)
+        };
     }
 }
 
@@ -162,7 +261,8 @@ mod tests {
     #[test]
     fn out_of_range_is_reported_for_every_field() {
         for name in NAMES {
-            for bad in [-1000.0_f32, 1000.0] {
+            // Beyond every limit, including the +/-2000 offset range.
+            for bad in [-1.0e4_f32, 1.0e4] {
                 let mut c = Crosshair::default();
                 set_field(&mut c, name, bad);
                 let errs = validate(&c).expect_err("out of range must be rejected");
@@ -173,14 +273,20 @@ mod tests {
 
     #[test]
     fn opacity_and_rotation_ranges() {
-        let mut c = Crosshair { opacity: 1.5, ..Crosshair::default() };
+        let mut c = Crosshair {
+            opacity: 1.5,
+            ..Crosshair::default()
+        };
         assert!(validate(&c).unwrap_err().iter().any(|e| e.field == "opacity"));
         c.opacity = -0.1;
         assert!(validate(&c).unwrap_err().iter().any(|e| e.field == "opacity"));
         c.opacity = 0.0;
         assert!(validate(&c).is_ok());
 
-        let mut c = Crosshair { rotation: 400.0, ..Crosshair::default() };
+        let mut c = Crosshair {
+            rotation: 400.0,
+            ..Crosshair::default()
+        };
         assert!(validate(&c).unwrap_err().iter().any(|e| e.field == "rotation"));
         c.rotation = 360.0;
         assert!(validate(&c).is_ok());
@@ -188,7 +294,12 @@ mod tests {
 
     #[test]
     fn validate_reports_all_errors_at_once() {
-        let c = Crosshair { length_h: f32::NAN, gap: 500.0, opacity: 2.0, ..Crosshair::default() };
+        let c = Crosshair {
+            length_h: f32::NAN,
+            gap: 500.0,
+            opacity: 2.0,
+            ..Crosshair::default()
+        };
         let errs = validate(&c).unwrap_err();
         assert_eq!(errs.len(), 3);
         assert!(errs.iter().all(|e| !e.message.is_empty()));
@@ -222,7 +333,11 @@ mod tests {
             assert_eq!(get_field(&c, name), get_field(&d, name), "{name}");
         }
 
-        let mut c = Crosshair { length_h: f32::INFINITY, offset_x: f32::NEG_INFINITY, ..Crosshair::default() };
+        let mut c = Crosshair {
+            length_h: f32::INFINITY,
+            offset_x: f32::NEG_INFINITY,
+            ..Crosshair::default()
+        };
         clamp(&mut c);
         assert_eq!(c.length_h, limits::MAX_LENGTH);
         assert_eq!(c.offset_x, -limits::MAX_OFFSET);

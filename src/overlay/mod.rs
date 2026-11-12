@@ -32,13 +32,17 @@ impl OverlayHandle {
         Self { tx, join }
     }
     pub fn send(&self, cmd: OverlayCommand) {
-        let _ = self.tx.send(cmd);
+        if self.tx.send(cmd).is_ok() {
+            window::wake();
+        }
     }
 }
 
 impl Drop for OverlayHandle {
     fn drop(&mut self) {
-        let _ = self.tx.send(OverlayCommand::Shutdown);
+        if self.tx.send(OverlayCommand::Shutdown).is_ok() {
+            window::wake();
+        }
         if let Some(j) = self.join.take() {
             let _ = j.join();
         }
