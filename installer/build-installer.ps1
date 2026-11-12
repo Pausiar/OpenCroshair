@@ -58,7 +58,7 @@ if ($LASTEXITCODE -ne 0) {
     throw "ISCC failed with exit code $LASTEXITCODE"
 }
 
-$output = Join-Path $root "dist\OpenCrosshair-$Version-x64-setup.exe"
+$output = Join-Path $root "dist\OpenCrosshair-$Version-setup.exe"
 if (-not (Test-Path -LiteralPath $output)) {
     throw "Expected installer was not produced: $output"
 }

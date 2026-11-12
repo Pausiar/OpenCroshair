@@ -57,17 +57,16 @@ More notes on the design direction are in [concept/README.md](concept/README.md)
 
 ## Installation
 
-OpenCrosshair targets **Windows 10 or newer, 64-bit (x64)**. Releases are published on the
-project's GitHub Releases page. Each release has two downloads:
+OpenCrosshair targets **Windows 10 or newer, 64-bit (x64)**. Download the latest version from the
+**[Releases page](https://github.com/Pausiar/OpenCroshair/releases)**. Each release offers an
+installer and a portable ZIP. Pick whichever you prefer:
 
-- **Installer** (`OpenCrosshair-<version>-x64-setup.exe`). Installs per user into your user profile.
-  It does **not** need administrator rights. The installer offers an option to install for all users
-  instead, which will ask for administrator rights. Optional extras you can tick during setup:
-  a desktop shortcut and "Launch at startup" (unticked by default).
-- **Portable ZIP** (`OpenCrosshair-<version>-x64-portable.zip`). Extract it anywhere and run
-  `opencrosshair.exe`. Nothing is written to the Registry for autostart unless you enable it in
-  Settings. Settings and presets are still stored in your user data folder (see below), the same as
-  the installed version.
+- **Installer** (`setup.exe`). Installs per user into your user profile, without administrator rights.
+  The installer can also install for all users, which asks for administrator rights. Optional
+  extras during setup: a desktop shortcut and "Launch at startup" (unticked by default).
+- **Portable ZIP**. Extract it anywhere and run `opencrosshair.exe`. Nothing is written to the
+  Registry for autostart unless you enable it in Settings. Settings and presets are still stored in
+  your user data folder (see below), the same as the installed version.
 
 Uninstalling with the installer removes the program files, the shortcuts and the autostart entry. It
 then asks, with "No" as the default answer, whether to also delete your data folder.

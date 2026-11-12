@@ -27,7 +27,7 @@ foreach ($required in @($exe, $license, $readme)) {
 
 $dist = Join-Path $root 'dist'
 $staging = Join-Path $dist 'portable-staging'
-$zip = Join-Path $dist "OpenCrosshair-$Version-x64-portable.zip"
+$zip = Join-Path $dist "OpenCrosshair-$Version-portable-win64.zip"
 
 New-Item -ItemType Directory -Force -Path $dist | Out-Null
 if (Test-Path -LiteralPath $staging) {
