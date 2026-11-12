@@ -680,3 +680,22 @@ fn save_dialog(ctx: &egui::Context, state: &mut AppState, ui_state: &mut EditorU
     }
     ui_state.save_form = Some(form);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn matching_preset_found_only_for_identical_crosshair() {
+        let mut custom = Crosshair::default();
+        custom.gap = 9.0;
+        let preset = Preset {
+            id: "p1".into(),
+            crosshair: custom.clone(),
+            ..Preset::default()
+        };
+        let presets = vec![preset];
+        assert_eq!(matching_preset_id(&presets, &custom).as_deref(), Some("p1"));
+        assert_eq!(matching_preset_id(&presets, &Crosshair::default()), None);
+    }
+}

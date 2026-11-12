@@ -704,3 +704,35 @@ fn meta_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut PresetsUi) {
     }
     pu.meta = Some(form);
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn preset(name: &str, category: &str) -> Preset {
+        Preset {
+            name: name.into(),
+            category: category.into(),
+            ..Preset::default()
+        }
+    }
+
+    #[test]
+    fn categories_are_trimmed_unique_and_sorted() {
+        let presets = vec![
+            preset("a", "Pro"),
+            preset("b", "custom"),
+            preset("c", " Custom "),
+            preset("d", "  "),
+            preset("e", "Classic"),
+        ];
+        assert_eq!(categories(&presets), vec!["Classic", "custom", "Pro"]);
+    }
+
+    #[test]
+    fn file_names_are_safe_and_nonempty() {
+        assert_eq!(file_name_for("Tight Cross!"), "tight-cross.json");
+        assert_eq!(file_name_for("  ../../etc  "), "etc.json");
+        assert_eq!(file_name_for("***"), "crosshair.json");
+    }
+}

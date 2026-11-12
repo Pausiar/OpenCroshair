@@ -114,6 +114,7 @@ pub fn page_header(ui: &mut Ui, title: &str, subtitle: &str) {
 }
 
 /// Small uppercase muted label used to group controls.
+#[allow(dead_code)] // Reserved for pages that group several controls.
 pub fn section_header(ui: &mut Ui, text: &str) {
     ui.add_space(4.0);
     ui.label(RichText::new(text.to_uppercase()).size(11.0).strong().color(TEXT2));
@@ -256,6 +257,7 @@ pub fn status_pill(ui: &mut Ui, text: &str, color: Color32) {
 
 /// Vector icons, drawn on a 24x24 grid (stroke style, scaled to the requested size).
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[allow(dead_code)] // Not every icon is used by the sidebar; others may use the rest.
 pub enum Icon {
     Overview,
     Editor,

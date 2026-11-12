@@ -242,7 +242,7 @@ mod tests {
         // Centre dot is cyan: green and blue dominate red.
         assert!(centre[1] > 150 && centre[2] > 150 && centre[0] < 100, "{centre:?}");
         // Background away from the crosshair is the dark app background.
-        let bg = px(3, 16);
+        let bg = px(6, 6);
         assert_eq!(bg[3], 255);
         assert!(bg[0] < 40 && bg[1] < 40 && bg[2] < 50);
     }

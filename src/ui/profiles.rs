@@ -1,12 +1,14 @@
 //! Game profiles page: per-game crosshair assignments, automatic switching and the default crosshair.
 use crate::crosshair::model::Preset;
+use crate::profiles::GameProfile;
 use crate::profiles::detection::list_running_processes;
 use crate::profiles::manager::{add_profile, normalize_exe, remove_profile, update_profile};
-use crate::profiles::GameProfile;
 use crate::state::AppState;
-use crate::ui::presets::{self, muted, FileKind, CAN_BROWSE};
+use crate::ui::presets::{self, CAN_BROWSE, FileKind, muted};
 use crate::ui::theme::{self, BLUE_LIGHT, BORDER, DANGER, SUCCESS, SURFACE, TEXT, TEXT2};
-use crate::ui::widgets::{danger_button, page_header, paint_crosshair, primary_button, secondary_button, status_pill, toggle_row};
+use crate::ui::widgets::{
+    danger_button, page_header, paint_crosshair, primary_button, secondary_button, status_pill, toggle_row,
+};
 use eframe::egui::{self, Align, Align2, Color32, CornerRadius, Layout, Margin, Rect, RichText, Sense, Stroke, Vec2};
 
 /// Add/edit dialog state. `id` is None while adding.
@@ -39,7 +41,13 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     let mut pu: ProfilesUi = ui.data(|d| d.get_temp(memory_id)).unwrap_or_default();
 
     ui.horizontal(|ui| {
-        ui.vertical(|ui| page_header(ui, "Game profiles", "Assign a crosshair to each game. Profiles apply while the game is in focus."));
+        ui.vertical(|ui| {
+            page_header(
+                ui,
+                "Game profiles",
+                "Assign a crosshair to each game. Profiles apply while the game is in focus.",
+            )
+        });
         ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
             if primary_button(ui, "Add profile").clicked() {
                 pu.form = Some(ProfileForm {
@@ -86,13 +94,19 @@ fn switching_card(ui: &mut egui::Ui, state: &mut AppState) {
         ) {
             state.settings.auto_profiles = auto;
             state.dirty = true;
-            let msg = if auto { "Automatic switching is on." } else { "Automatic switching is off." };
+            let msg = if auto {
+                "Automatic switching is on."
+            } else {
+                "Automatic switching is off."
+            };
             state.toast(msg, false);
         }
 
         ui.add_space(10.0);
         ui.label(RichText::new("Default crosshair").size(14.0).color(TEXT));
-        ui.label(muted("Used when a profile's game leaves focus, and when no profile matches after a game was active."));
+        ui.label(muted(
+            "Used when a profile's game leaves focus, and when no profile matches after a game was active.",
+        ));
         ui.add_space(4.0);
         let current = state.settings.default_profile_preset_id.clone();
         let selected_name = current
@@ -137,15 +151,13 @@ fn profile_list(ui: &mut egui::Ui, state: &mut AppState, actions: &mut Vec<Actio
         });
         return;
     }
-    egui::ScrollArea::vertical()
-        .auto_shrink([false, false])
-        .show(ui, |ui| {
-            for i in 0..state.profiles.len() {
-                let p = state.profiles[i].clone();
-                profile_row(ui, state, i, &p, actions);
-                ui.add_space(8.0);
-            }
-        });
+    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
+        for i in 0..state.profiles.len() {
+            let p = state.profiles[i].clone();
+            profile_row(ui, state, i, &p, actions);
+            ui.add_space(8.0);
+        }
+    });
 }
 
 fn profile_row(ui: &mut egui::Ui, state: &mut AppState, index: usize, p: &GameProfile, actions: &mut Vec<Action>) {
@@ -159,12 +171,18 @@ fn profile_row(ui: &mut egui::Ui, state: &mut AppState, index: usize, p: &GamePr
         ui.horizontal(|ui| {
             // Preview tile with the assigned crosshair.
             let (tile, _) = ui.allocate_exact_size(Vec2::splat(56.0), Sense::hover());
-            ui.painter().rect_filled(tile, CornerRadius::same(8), theme::PREVIEW_DARK);
+            ui.painter()
+                .rect_filled(tile, CornerRadius::same(8), theme::PREVIEW_DARK);
             match &preset {
                 Some(pr) => {
                     let bounds = pr.crosshair.bounding_size() as f32;
                     let zoom = (44.0 / bounds).clamp(0.5, 2.0);
-                    paint_crosshair(ui, Rect::from_center_size(tile.center(), Vec2::splat(bounds * zoom)), &pr.crosshair, zoom);
+                    paint_crosshair(
+                        ui,
+                        Rect::from_center_size(tile.center(), Vec2::splat(bounds * zoom)),
+                        &pr.crosshair,
+                        zoom,
+                    );
                 }
                 None => {
                     ui.painter().text(
@@ -213,13 +231,24 @@ fn profile_row(ui: &mut egui::Ui, state: &mut AppState, index: usize, p: &GamePr
 fn handle_action(state: &mut AppState, pu: &mut ProfilesUi, action: Action) {
     match action {
         Action::Use(id) => {
-            let Some(p) = state.profiles.iter().find(|p| p.id == id).cloned() else { return };
+            let Some(p) = state.profiles.iter().find(|p| p.id == id).cloned() else {
+                return;
+            };
             let Some(preset_id) = p.preset_id.clone() else {
-                state.toast(format!("\"{}\" has no crosshair assigned. Edit the profile to choose one.", p.name), true);
+                state.toast(
+                    format!(
+                        "\"{}\" has no crosshair assigned. Edit the profile to choose one.",
+                        p.name
+                    ),
+                    true,
+                );
                 return;
             };
             if !state.presets.iter().any(|pr| pr.id == preset_id) {
-                state.toast(format!("The crosshair for \"{}\" no longer exists. Edit the profile.", p.name), true);
+                state.toast(
+                    format!("The crosshair for \"{}\" no longer exists. Edit the profile.", p.name),
+                    true,
+                );
                 return;
             }
             state.apply_preset(&preset_id);
@@ -255,7 +284,11 @@ fn stem_of(exe: &str) -> String {
 
 fn form_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
     let Some(mut form) = pu.form.take() else { return };
-    let title = if form.id.is_some() { "Edit profile" } else { "Add profile" };
+    let title = if form.id.is_some() {
+        "Edit profile"
+    } else {
+        "Add profile"
+    };
     let presets_list: Vec<(String, String)> = state.presets.iter().map(|p| (p.id.clone(), p.name.clone())).collect();
     let mut open = true;
     let mut save = false;
@@ -297,14 +330,21 @@ fn form_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
             });
             ui.add_space(4.0);
             let picker_open = form.running.is_some();
-            if secondary_button(ui, if picker_open { "Hide running apps" } else { "Pick from running apps" }).clicked() {
+            if secondary_button(
+                ui,
+                if picker_open {
+                    "Hide running apps"
+                } else {
+                    "Pick from running apps"
+                },
+            )
+            .clicked()
+            {
                 form.running = if picker_open {
                     None
                 } else {
-                    let mut list: Vec<(String, String)> = list_running_processes()
-                        .into_iter()
-                        .map(|r| (r.name, r.path))
-                        .collect();
+                    let mut list: Vec<(String, String)> =
+                        list_running_processes().into_iter().map(|r| (r.name, r.path)).collect();
                     list.sort();
                     list.dedup_by(|a, b| a.0 == b.0);
                     Some(list)
@@ -388,7 +428,12 @@ fn form_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
 
 fn delete_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
     let Some(id) = pu.delete.clone() else { return };
-    let name = state.profiles.iter().find(|p| p.id == id).map(|p| p.name.clone()).unwrap_or_default();
+    let name = state
+        .profiles
+        .iter()
+        .find(|p| p.id == id)
+        .map(|p| p.name.clone())
+        .unwrap_or_default();
     let mut open = true;
     let mut confirmed = false;
     let mut cancelled = false;
@@ -399,7 +444,9 @@ fn delete_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi)
         .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
         .show(ctx, |ui| {
             ui.set_width(320.0);
-            ui.label(format!("\"{name}\" will be removed. Its game will no longer switch crosshairs."));
+            ui.label(format!(
+                "\"{name}\" will be removed. Its game will no longer switch crosshairs."
+            ));
             ui.add_space(10.0);
             ui.horizontal(|ui| {
                 if danger_button(ui, "Delete").clicked() {
@@ -424,5 +471,16 @@ fn delete_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi)
     }
     if confirmed || cancelled || !open {
         pu.delete = None;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn default_profile_name_drops_exe_suffix() {
+        assert_eq!(stem_of("cs2.exe"), "cs2");
+        assert_eq!(stem_of("game"), "game");
     }
 }

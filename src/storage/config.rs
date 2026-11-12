@@ -545,7 +545,7 @@ impl SaveJob {
 }
 
 enum WorkerMsg {
-    Job(SaveJob),
+    Job(Box<SaveJob>),
     /// Acknowledged once every job queued before it has been written.
     Flush(mpsc::Sender<()>),
 }
@@ -584,7 +584,7 @@ impl SaveWorker {
     /// Queues a job. Never blocks on disk I/O.
     pub fn save(&self, job: SaveJob) {
         let sent = match &self.tx {
-            Some(tx) => tx.send(WorkerMsg::Job(job)).is_ok(),
+            Some(tx) => tx.send(WorkerMsg::Job(Box::new(job))).is_ok(),
             None => false,
         };
         if !sent {
@@ -625,7 +625,7 @@ impl Drop for SaveWorker {
 fn run_worker(paths: Paths, rx: mpsc::Receiver<WorkerMsg>, errors: Arc<Mutex<Vec<String>>>) {
     while let Ok(msg) = rx.recv() {
         let mut job = match msg {
-            WorkerMsg::Job(job) => job,
+            WorkerMsg::Job(job) => *job,
             WorkerMsg::Flush(ack) => {
                 let _ = ack.send(());
                 continue;
@@ -634,7 +634,7 @@ fn run_worker(paths: Paths, rx: mpsc::Receiver<WorkerMsg>, errors: Arc<Mutex<Vec
         let mut acks = Vec::new();
         loop {
             match rx.try_recv() {
-                Ok(WorkerMsg::Job(newer)) => job.merge(newer),
+                Ok(WorkerMsg::Job(newer)) => job.merge(*newer),
                 Ok(WorkerMsg::Flush(ack)) => {
                     // Write what we have so far before acknowledging the flush.
                     acks.push(ack);
@@ -716,7 +716,21 @@ mod tests {
     fn resolve_yields_distinct_log_dir() {
         let paths = Paths::resolve().expect("project directories");
         assert!(paths.log_dir.ends_with("logs"));
-        assert!(paths.config_dir.ends_with("OpenCrosshair") || paths.config_dir.ends_with("config"));
+        // `directories` may lowercase the application name on some platforms.
+        assert!(
+            paths
+                .config_dir
+                .to_string_lossy()
+                .to_lowercase()
+                .contains("opencrosshair")
+        );
+        assert!(
+            paths
+                .data_dir
+                .to_string_lossy()
+                .to_lowercase()
+                .contains("opencrosshair")
+        );
     }
 
     #[test]
@@ -785,9 +799,11 @@ mod tests {
     #[test]
     fn settings_values_are_clamped_on_load() {
         let (_dir, paths) = temp_paths();
-        let mut settings = Settings::default();
-        settings.detection_interval_ms = 10;
-        settings.preview_zoom = 100.0;
+        let mut settings = Settings {
+            detection_interval_ms: 10,
+            preview_zoom: 100.0,
+            ..Settings::default()
+        };
         save_settings(&paths, &settings).unwrap();
 
         let loaded = load_all(&paths);

@@ -241,10 +241,8 @@ impl App {
             Resolution::Revert { preset_id } => {
                 self.active_profile_id = None;
                 self.state.active_profile = None;
-                if let Some(pid) = preset_id {
-                    if self.state.presets.iter().any(|p| p.id == pid) {
-                        self.state.apply_preset(&pid);
-                    }
+                if let Some(pid) = preset_id.filter(|pid| self.state.presets.iter().any(|p| &p.id == pid)) {
+                    self.state.apply_preset(&pid);
                 }
             }
             Resolution::Keep => {}
@@ -403,10 +401,10 @@ impl App {
         for err in self.saver.take_errors() {
             self.pending_toasts.push_back((err, true));
         }
-        if self.state.status.is_none() {
-            if let Some(next) = self.pending_toasts.pop_front() {
-                self.state.status = Some(next);
-            }
+        if self.state.status.is_none()
+            && let Some(next) = self.pending_toasts.pop_front()
+        {
+            self.state.status = Some(next);
         }
         match (&self.state.status, &self.toast_seen) {
             (None, _) => self.toast_seen = None,
