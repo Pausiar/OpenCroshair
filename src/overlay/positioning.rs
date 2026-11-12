@@ -103,6 +103,7 @@ pub fn dpi_scale_for(monitors: &[MonitorInfo], game_rect: Option<Rect>, pos: &Po
 
 /// Top-left window position (physical px) for a bitmap of `bitmap_w` x `bitmap_h`, at 1x
 /// crosshair offsets (scale 1.0). See [`compute_position_scaled`].
+#[allow(dead_code)] // Contract entry point; the overlay thread uses the scaled variant.
 pub fn compute_position(
     monitors: &[MonitorInfo],
     game_rect: Option<Rect>,

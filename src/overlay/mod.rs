@@ -17,6 +17,7 @@ pub enum OverlayCommand {
     /// Show/hide window (overlay_enabled && crosshair_visible).
     SetVisible(bool),
     /// Re-position only (monitor / game window changed).
+    #[allow(dead_code)] // Part of the contract; the UI currently sends Update, which also repositions.
     Reposition(PositionSettings),
     Shutdown,
 }
