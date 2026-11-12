@@ -1,3 +1,6 @@
+#![allow(unknown_lints)]
+// Newer clippy suggests `as_chunks`, which is not stable on older toolchains.
+#![allow(clippy::chunks_exact_to_as_chunks)]
 mod app;
 mod crosshair;
 mod hotkeys;
