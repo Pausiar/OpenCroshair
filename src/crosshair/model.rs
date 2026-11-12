@@ -33,6 +33,7 @@ impl Rgba {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
+#[allow(clippy::enum_variant_names)]
 pub enum Shape {
     #[default]
     Cross,
@@ -41,6 +42,7 @@ pub enum Shape {
     CrossDot,
     /// Cross without outer lines: only center dot + circle optional via flags.
     CrossNoOuter,
+    #[allow(dead_code)]
     TShape,
     /// Chevron / caret style.
     Chevron,

@@ -26,6 +26,7 @@ impl Rect {
         (self.x.saturating_add(self.w / 2), self.y.saturating_add(self.h / 2))
     }
 
+    #[allow(dead_code)]
     pub fn contains(&self, px: i32, py: i32) -> bool {
         px >= self.x
             && py >= self.y
@@ -424,7 +425,7 @@ mod tests {
         c.offset_x = 1.0e9;
         c.offset_y = -1.0e9;
         let (x, y) = compute_position(&single(), None, &p, &c, u32::MAX, u32::MAX);
-        assert!(x <= i32::MAX && y >= i32::MIN);
+        let _ = (x, y); // must not panic or overflow
     }
 
     #[test]

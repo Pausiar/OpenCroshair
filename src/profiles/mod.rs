@@ -30,6 +30,7 @@ impl Default for GameProfile {
 impl GameProfile {
     /// New enabled profile with a fresh id. `exe` is normalized to a lowercase file name
     /// (a full path is accepted and reduced to its file name).
+    #[allow(dead_code)]
     pub fn new(name: &str, exe: &str, preset_id: Option<String>) -> Self {
         Self {
             name: name.trim().to_string(),

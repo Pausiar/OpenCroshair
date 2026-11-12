@@ -243,6 +243,7 @@ pub fn parse_spec(input: &str) -> Result<HotkeySpec, HotkeyError> {
 }
 
 /// Parse and re-format text into its canonical spelling, e.g. "ctrl+alt+f1" -> "Ctrl+Alt+F1".
+#[allow(dead_code)]
 pub fn normalize_hotkey(input: &str) -> Result<String, HotkeyError> {
     parse_spec(input).map(|s| s.format())
 }
@@ -463,6 +464,7 @@ mod platform {
     }
 
     /// Parse text such as "Ctrl+Alt+F1" into a registrable `HotKey`.
+    #[allow(dead_code)]
     pub fn parse_hotkey(input: &str) -> Result<HotKey, super::HotkeyError> {
         let spec = super::parse_spec(input)?;
         to_hotkey(&spec).ok_or_else(|| super::HotkeyError::UnknownKey(spec.key.clone()))
@@ -570,6 +572,7 @@ mod platform {
 
 pub use platform::HotkeyManager;
 #[cfg(windows)]
+#[allow(unused_imports)]
 pub use platform::parse_hotkey;
 
 #[cfg(test)]

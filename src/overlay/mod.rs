@@ -8,6 +8,7 @@ pub mod windows_api;
 
 /// Commands sent from UI/hotkeys to the overlay thread.
 #[derive(Debug, Clone)]
+#[cfg_attr(not(windows), allow(dead_code))]
 pub enum OverlayCommand {
     /// Replace crosshair + position and redraw.
     Update {

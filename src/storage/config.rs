@@ -196,6 +196,7 @@ impl Paths {
 /// Upgrades a raw settings document to `SETTINGS_VERSION`, one step at a time.
 /// A document without a version is treated as version 0. Documents from a newer build are
 /// returned as-is (best effort); `load_all` reports those as a warning.
+#[allow(dead_code)]
 pub fn migrate_settings(value: Value) -> Value {
     let mut warnings = Vec::new();
     migrate_settings_checked(value, &mut warnings)

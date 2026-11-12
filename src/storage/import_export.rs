@@ -63,6 +63,7 @@ pub enum ImportError {
     #[error("the file is larger than the {limit}-byte limit")]
     TooLarge { limit: u64 },
     #[error("could not read the file: {0}")]
+    #[allow(dead_code)]
     Io(String),
 }
 
@@ -359,15 +360,18 @@ fn unique_name(base: &str, taken: &HashSet<String>) -> String {
 }
 
 /// Writes an export document to `path` atomically.
+#[allow(dead_code)]
 pub fn export_to_file(path: &Path, content: &str) -> io::Result<()> {
     write_atomic(path, content.as_bytes())
 }
 
 /// Reads and parses an export file (at most `MAX_IMPORT_BYTES`).
+#[allow(dead_code)]
 pub fn import_from_file(path: &Path) -> Result<ImportedData, ImportError> {
     import_from_file_with(path, ImportOptions::default())
 }
 
+#[allow(dead_code)]
 pub fn import_from_file_with(path: &Path, options: ImportOptions) -> Result<ImportedData, ImportError> {
     let meta = fs::metadata(path).map_err(|e| ImportError::Io(e.to_string()))?;
     if meta.len() > MAX_IMPORT_BYTES {

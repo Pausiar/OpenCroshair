@@ -44,6 +44,7 @@ enum Foreground {
 ///
 /// Returns `None` when there is no foreground window, when the foreground window belongs to
 /// OpenCrosshair itself, when its process cannot be opened, or on non-Windows platforms.
+#[allow(dead_code)]
 pub fn foreground_exe() -> Option<String> {
     match current_foreground() {
         Foreground::Exe(name) => Some(name),

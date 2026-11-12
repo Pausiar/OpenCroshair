@@ -5,6 +5,7 @@
 use std::path::Path;
 
 /// Registry value name under the Run key.
+#[allow(dead_code)]
 pub const VALUE_NAME: &str = "OpenCrosshair";
 
 /// Value data written to the Run key: quoted exe path followed by ` --minimized`.
