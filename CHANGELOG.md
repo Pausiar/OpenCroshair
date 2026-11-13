@@ -7,6 +7,12 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-11-13
+
+### Fixed
+- Release builds no longer open a console window behind the app.
+- The window and taskbar icon now use the full 256 px application icon.
+
 ## [0.1.0] - 2026-11-12
 
 First public release. Windows 10 or newer, 64-bit (x64) only.

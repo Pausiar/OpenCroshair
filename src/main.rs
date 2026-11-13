@@ -1,3 +1,5 @@
+// Release builds are GUI-only: no console window. Debug builds keep the console for logs.
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #![allow(unknown_lints)]
 // Newer clippy suggests `as_chunks`, which is not stable on older toolchains.
 #![allow(clippy::chunks_exact_to_as_chunks)]
@@ -37,8 +39,11 @@ mod single_instance {
 }
 
 fn app_icon() -> eframe::egui::IconData {
-    let (rgba, width, height) = system::tray::icon_rgba();
-    eframe::egui::IconData { rgba, width, height }
+    // 256x256 application icon; fall back to the procedural icon if decoding ever fails.
+    eframe::icon_data::from_png_bytes(include_bytes!("../assets/icons/icon.png")).unwrap_or_else(|_| {
+        let (rgba, width, height) = system::tray::icon_rgba();
+        eframe::egui::IconData { rgba, width, height }
+    })
 }
 
 fn main() -> eframe::Result {
