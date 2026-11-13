@@ -1,5 +1,6 @@
 pub mod dashboard;
 pub mod editor;
+pub mod fonts;
 pub mod navigation;
 pub mod presets;
 pub mod profiles;

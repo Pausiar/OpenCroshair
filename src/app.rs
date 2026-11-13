@@ -82,7 +82,8 @@ impl App {
     /// `start_hidden` is only honored when the tray exists (otherwise the window stays visible).
     pub fn new(cc: &eframe::CreationContext<'_>, paths: Paths, data: LoadedData, start_hidden: bool) -> Self {
         let ctx = cc.egui_ctx.clone();
-        theme::apply(&ctx);
+        crate::ui::fonts::install(&ctx);
+        theme::apply(&ctx, data.settings.theme);
 
         let mut pending_toasts: VecDeque<(String, bool)> = data.warnings.iter().map(|w| (w.clone(), true)).collect();
 
