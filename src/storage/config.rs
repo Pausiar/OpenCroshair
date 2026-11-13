@@ -15,7 +15,7 @@ use std::sync::{Arc, Mutex, mpsc};
 use std::thread::JoinHandle;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-pub const SETTINGS_VERSION: u32 = 1;
+pub const SETTINGS_VERSION: u32 = 2;
 pub const PRESETS_VERSION: u32 = 1;
 pub const PROFILES_VERSION: u32 = 1;
 
@@ -120,6 +120,12 @@ pub struct Settings {
     pub preview_dark_background: bool,
     pub preview_zoom: f32,
     pub recent_preset_ids: Vec<String>,
+    /// App color theme (light or dark).
+    pub theme: ThemeMode,
+    /// False until the first-run onboarding has been completed or skipped.
+    pub onboarding_done: bool,
+    /// Use the operating system's window title bar instead of the app's custom one.
+    pub use_system_title_bar: bool,
 }
 impl Default for Settings {
     fn default() -> Self {
@@ -140,6 +146,9 @@ impl Default for Settings {
             preview_dark_background: true,
             preview_zoom: 4.0,
             recent_preset_ids: Vec::new(),
+            theme: ThemeMode::Light,
+            onboarding_done: false,
+            use_system_title_bar: false,
         }
     }
 }
@@ -224,6 +233,7 @@ fn migrate_settings_checked(mut value: Value, warnings: &mut Vec<String>) -> Val
         while current < SETTINGS_VERSION {
             current = match current {
                 0 => migrate_v0_to_v1(obj),
+                1 => migrate_v1_to_v2(obj),
                 _ => SETTINGS_VERSION,
             };
         }
@@ -235,6 +245,16 @@ fn migrate_settings_checked(mut value: Value, warnings: &mut Vec<String>) -> Val
 fn migrate_v0_to_v1(obj: &mut serde_json::Map<String, Value>) -> u32 {
     obj.insert("version".to_string(), Value::from(1u32));
     1
+}
+
+/// Version 2 added the theme, onboarding and title bar settings. Existing installs already use
+/// the app, so they are marked as onboarded and keep the defaults for the other two.
+fn migrate_v1_to_v2(obj: &mut serde_json::Map<String, Value>) -> u32 {
+    obj.entry("theme").or_insert_with(|| Value::from("light"));
+    obj.entry("onboarding_done").or_insert(Value::Bool(true));
+    obj.entry("use_system_title_bar").or_insert(Value::Bool(false));
+    obj.insert("version".to_string(), Value::from(2u32));
+    2
 }
 
 // ---------------------------------------------------------------------------
@@ -724,7 +744,11 @@ mod tests {
 
     #[test]
     fn resolve_yields_distinct_log_dir() {
-        let paths = Paths::resolve().expect("project directories");
+        // Without a home directory (e.g. a bare CI sandbox) there is no platform layout to check.
+        let Some(paths) = Paths::resolve() else {
+            eprintln!("skipped: no home directory available for ProjectDirs");
+            return;
+        };
         assert!(paths.log_dir.ends_with("logs"));
         // `directories` may lowercase the application name on some platforms.
         assert!(
@@ -880,6 +904,93 @@ mod tests {
         assert_eq!(loaded.settings.detection_interval_ms, 500);
         assert_eq!(loaded.warnings.len(), 1);
         assert!(loaded.warnings[0].contains("newer version"));
+    }
+
+    #[test]
+    fn v0_settings_file_migrates_to_v2_and_skips_onboarding() {
+        let (_dir, paths) = temp_paths();
+        fs::create_dir_all(&paths.config_dir).unwrap();
+        fs::write(
+            paths.settings_file(),
+            json!({"detection_interval_ms": 500, "preview_zoom": 6.0}).to_string(),
+        )
+        .unwrap();
+        let loaded = load_all(&paths);
+        assert_eq!(loaded.settings.version, 2);
+        assert_eq!(loaded.settings.detection_interval_ms, 500);
+        assert_eq!(loaded.settings.theme, ThemeMode::Light);
+        assert!(loaded.settings.onboarding_done);
+        assert!(!loaded.settings.use_system_title_bar);
+        assert!(loaded.warnings.is_empty());
+    }
+
+    #[test]
+    fn v1_settings_file_migrates_to_v2_and_skips_onboarding() {
+        let (_dir, paths) = temp_paths();
+        fs::create_dir_all(&paths.config_dir).unwrap();
+        fs::write(
+            paths.settings_file(),
+            json!({"version": 1, "overlay_enabled": true}).to_string(),
+        )
+        .unwrap();
+        let loaded = load_all(&paths);
+        assert_eq!(loaded.settings.version, 2);
+        assert!(loaded.settings.overlay_enabled);
+        assert_eq!(loaded.settings.theme, ThemeMode::Light);
+        assert!(loaded.settings.onboarding_done);
+        assert!(!loaded.settings.use_system_title_bar);
+        assert!(loaded.warnings.is_empty());
+
+        let migrated = migrate_settings(json!({"version": 1}));
+        assert_eq!(migrated["version"], json!(2));
+        assert_eq!(migrated["theme"], json!("light"));
+        assert_eq!(migrated["onboarding_done"], json!(true));
+        assert_eq!(migrated["use_system_title_bar"], json!(false));
+    }
+
+    #[test]
+    fn fresh_settings_start_with_onboarding_pending() {
+        let defaults = Settings::default();
+        assert_eq!(defaults.version, SETTINGS_VERSION);
+        assert_eq!(defaults.theme, ThemeMode::Light);
+        assert!(!defaults.onboarding_done);
+        assert!(!defaults.use_system_title_bar);
+
+        let (_dir, paths) = temp_paths();
+        let loaded = load_all(&paths);
+        assert!(!loaded.settings.onboarding_done);
+        assert_eq!(loaded.settings.theme, ThemeMode::Light);
+    }
+
+    #[test]
+    fn settings_round_trip_and_ignore_unknown_fields() {
+        let (_dir, paths) = temp_paths();
+        let settings = Settings {
+            theme: ThemeMode::Dark,
+            onboarding_done: true,
+            use_system_title_bar: true,
+            ..Settings::default()
+        };
+        save_settings(&paths, &settings).unwrap();
+        assert_eq!(load_all(&paths).settings, settings);
+
+        let mut raw: Value = serde_json::from_slice(&fs::read(paths.settings_file()).unwrap()).unwrap();
+        raw["unknown_future_field"] = json!({"nested": [1, 2]});
+        fs::write(paths.settings_file(), raw.to_string()).unwrap();
+        let loaded = load_all(&paths);
+        assert_eq!(loaded.settings, settings);
+        assert!(loaded.warnings.is_empty());
+    }
+
+    #[test]
+    fn theme_mode_serializes_snake_case() {
+        assert_eq!(serde_json::to_value(ThemeMode::Light).unwrap(), json!("light"));
+        assert_eq!(serde_json::to_value(ThemeMode::Dark).unwrap(), json!("dark"));
+        assert_eq!(
+            serde_json::from_value::<ThemeMode>(json!("dark")).unwrap(),
+            ThemeMode::Dark
+        );
+        assert!(serde_json::from_value::<ThemeMode>(json!("Dark")).is_err());
     }
 
     #[test]
