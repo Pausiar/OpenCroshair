@@ -16,3 +16,13 @@ Rules:
 - Write unit tests for pure logic (#[cfg(test)] in your files). Run `cargo test` / `cargo clippy` for your modules when feasible.
 - Do not run `cargo fmt` on the whole project; format only your files with `rustfmt --edition 2024 <file>`.
 - Do NOT git commit. Final report: <=15 lines: what you built, public API, caveats.
+
+## Redesign (v0.1.2) additions
+Plan: light (cream/light-grey surfaces, light-blue accent, dark-blue primary) + dark (deep navy) themes, serif headings (Source Serif 4) + Inter body,
+custom title bar, onboarding, more presets. Palette API contract (src/ui/theme.rs):
+`pub struct Palette { bg, surface, surface_alt, border, text, text_muted, text_faint, accent, accent_soft, primary, on_primary, primary_hover, success, warning, danger: Color32 }`,
+`pub const LIGHT: Palette`, `pub const DARK: Palette`, `pub fn palette(ctx:&egui::Context)->&'static Palette` (by ctx.style().visuals.dark_mode),
+`pub fn apply(ctx:&egui::Context, mode: crate::storage::config::ThemeMode)`. Settings gets `theme: ThemeMode` (default Light) and `onboarding_done: bool`.
+Fonts: `ui::fonts::install(ctx)`; families: Proportional=Inter, `FontFamily::Name("semibold".into())`, `FontFamily::Name("serif".into())`.
+Pages must never change layout on hover: draw hover actions into fixed rects (painter / ui.put), never by allocating extra widgets inside wrapped rows.
+Button labels must be centered both ways.
