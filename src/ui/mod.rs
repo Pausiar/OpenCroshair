@@ -6,4 +6,5 @@ pub mod presets;
 pub mod profiles;
 pub mod settings;
 pub mod theme;
+pub mod titlebar;
 pub mod widgets;
