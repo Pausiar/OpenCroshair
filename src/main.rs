@@ -79,6 +79,8 @@ fn main() -> eframe::Result {
         .with_inner_size([1100.0, 720.0])
         .with_min_inner_size([900.0, 600.0])
         .with_icon(app_icon())
+        // The custom title bar (app.rs) replaces the OS frame unless the user opted into the system one.
+        .with_decorations(data.settings.use_system_title_bar)
         .with_visible(!start_hidden);
     let options = eframe::NativeOptions {
         viewport,

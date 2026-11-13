@@ -1,16 +1,31 @@
-//! Preset library page. Also hosts helpers shared with the editor and profiles pages:
-//! the file path prompt (text field + Browse on Windows) and preset categories.
+//! Preset library page. Also hosts helpers shared with the editor and profiles pages: the file
+//! path prompt (text field + Browse on Windows), preset categories, grid sizing and the
+//! enabled-button helper.
 use crate::crosshair::model::Preset;
 use crate::state::{AppState, Page};
 use crate::storage::import_export::{export_collection, export_crosshair, merge_imports, parse_import};
-use crate::ui::theme::{self, BLUE, BORDER, SURFACE, TEXT, TEXT2};
-use crate::ui::widgets::{danger_button, paint_crosshair, secondary_button};
-use eframe::egui::{self, Align2, Color32, CornerRadius, FontId, Pos2, Rect, Sense, Stroke, StrokeKind, Vec2};
+use crate::ui::theme::{self, Palette};
+use crate::ui::widgets::{
+    BUTTON_HEIGHT, Icon, PreviewScene, caption, danger_button, empty_state, ghost_button, paint_icon,
+    preview_scene_box, primary_button, search_field, secondary_button,
+};
+use eframe::egui::{
+    self, Align2, CornerRadius, CursorIcon, FontFamily, FontId, Pos2, Rect, Response, Sense, Stroke, StrokeKind, Vec2,
+};
 use std::path::{Path, PathBuf};
 
-const CARD_W: f32 = 220.0;
-const CARD_H: f32 = 176.0;
-const TILE_H: f32 = 112.0;
+const CARD_W: f32 = 176.0;
+const CARD_H: f32 = 156.0;
+const CARD_GAP: f32 = 16.0;
+const CARD_RADIUS: u8 = 14;
+const INPUT_RADIUS: u8 = 6;
+/// Height of the thumbnail (the preview area inside a tile).
+const THUMB_H: f32 = 92.0;
+/// Height of the hover action row at the bottom of a tile.
+const ACTION_ROW_H: f32 = 40.0;
+const ACTION_SIZE: f32 = 28.0;
+const ACTION_GAP: f32 = 6.0;
+const STAR_SIZE: f32 = 24.0;
 
 /// Distinct, sorted (case-insensitive) categories used by the given presets.
 pub(crate) fn categories(presets: &[Preset]) -> Vec<String> {
@@ -22,6 +37,23 @@ pub(crate) fn categories(presets: &[Preset]) -> Vec<String> {
     out.sort_by_key(|c| c.to_lowercase());
     out.dedup_by(|a, b| a.eq_ignore_ascii_case(b));
     out
+}
+
+/// Number of columns for fixed-size items of width `item_w` with `gap` between them, in a row of
+/// `avail` width: `max(1, floor((avail + gap) / (item_w + gap)))`.
+pub(crate) fn grid_columns(avail: f32, item_w: f32, gap: f32) -> usize {
+    let n = ((avail + gap) / (item_w + gap)).floor();
+    // NaN and infinite widths fall back to a single column.
+    if n.is_finite() { n.clamp(1.0, 64.0) as usize } else { 1 }
+}
+
+/// Shorten `text` to at most `max_chars` characters, ending in "..." when cut.
+pub(crate) fn ellipsize(text: &str, max_chars: usize) -> String {
+    if text.chars().count() <= max_chars {
+        return text.to_string();
+    }
+    let kept: String = text.chars().take(max_chars.saturating_sub(3)).collect();
+    format!("{kept}...")
 }
 
 /// Turn a preset name into a safe default file name.
@@ -46,6 +78,17 @@ pub(crate) fn file_name_for(name: &str) -> String {
     } else {
         format!("{s}.json")
     }
+}
+
+/// Button that is drawn in both states but only reports a click when enabled.
+pub(crate) fn button_if(
+    ui: &mut egui::Ui,
+    enabled: bool,
+    make: fn(&mut egui::Ui, &str) -> Response,
+    label: &str,
+) -> bool {
+    let clicked = ui.add_enabled_ui(enabled, |ui| make(ui, label).clicked()).inner;
+    enabled && clicked
 }
 
 /// Kind of file a path prompt works with (controls the Browse filter).
@@ -112,6 +155,7 @@ pub(crate) enum PromptOutcome {
 
 /// Renders the path prompt as a centered window. Returns what the user did this frame.
 pub(crate) fn path_prompt_window(ctx: &egui::Context, prompt: &mut PathPrompt) -> PromptOutcome {
+    let pal = theme::palette(ctx);
     let mut outcome = PromptOutcome::Open;
     let mut open = true;
     let title = prompt.title.clone();
@@ -128,7 +172,7 @@ pub(crate) fn path_prompt_window(ctx: &egui::Context, prompt: &mut PathPrompt) -
                 (true, false) => "Type the full path of the file to write.",
                 (false, false) => "Type the full path of the file to open.",
             };
-            ui.label(egui::RichText::new(hint).size(12.0).color(TEXT2));
+            ui.label(egui::RichText::new(hint).size(12.0).color(pal.text_muted));
             ui.add_space(6.0);
             ui.horizontal(|ui| {
                 let width = if CAN_BROWSE { 300.0 } else { 420.0 };
@@ -138,21 +182,21 @@ pub(crate) fn path_prompt_window(ctx: &egui::Context, prompt: &mut PathPrompt) -
                         .desired_width(width),
                 );
                 let browse = CAN_BROWSE && secondary_button(ui, "Browse...").clicked();
-                if let Some(p) = browse
+                if let Some(picked) = browse
                     .then(|| pick_path(prompt.kind, prompt.save, &prompt.path))
                     .flatten()
                 {
-                    prompt.path = p.display().to_string();
+                    prompt.path = picked.display().to_string();
                 }
             });
             ui.add_space(10.0);
             ui.horizontal(|ui| {
                 let ok = !prompt.path.trim().is_empty();
                 let label = if prompt.save { "Save" } else { "Open" };
-                if ui.add_enabled(ok, egui::Button::new(label)).clicked() {
+                if button_if(ui, ok, primary_button, label) {
                     outcome = PromptOutcome::Confirm(prompt.path.trim().to_string());
                 }
-                if ui.button("Cancel").clicked() {
+                if secondary_button(ui, "Cancel").clicked() {
                     outcome = PromptOutcome::Cancel;
                 }
             });
@@ -163,15 +207,34 @@ pub(crate) fn path_prompt_window(ctx: &egui::Context, prompt: &mut PathPrompt) -
     outcome
 }
 
-/// Muted helper text style used across the editor, presets and profiles pages.
-pub(crate) fn muted(text: &str) -> egui::RichText {
-    egui::RichText::new(text).size(12.0).color(TEXT2)
-}
-
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
 enum Transfer {
     Import,
     Export,
+}
+
+/// Which presets the grid shows, besides the search text.
+#[derive(Clone, Debug, Default, PartialEq)]
+enum Filter {
+    #[default]
+    All,
+    Favorites,
+    Category(String),
+}
+
+fn matches_filter(p: &Preset, filter: &Filter) -> bool {
+    match filter {
+        Filter::All => true,
+        Filter::Favorites => p.favorite,
+        Filter::Category(c) => p.category.trim() == c,
+    }
+}
+
+/// `query_lower` must already be trimmed and lowercased; an empty query matches everything.
+fn matches_query(p: &Preset, query_lower: &str) -> bool {
+    query_lower.is_empty()
+        || p.name.to_lowercase().contains(query_lower)
+        || p.category.to_lowercase().contains(query_lower)
 }
 
 #[derive(Clone, Default)]
@@ -185,8 +248,7 @@ struct MetaForm {
 #[derive(Clone, Default)]
 struct PresetsUi {
     query: String,
-    category: Option<String>,
-    favorites_only: bool,
+    filter: Filter,
     meta: Option<MetaForm>,
     delete: Option<String>,
     prompt: Option<(Transfer, PathPrompt)>,
@@ -202,13 +264,50 @@ enum Action {
     Favorite(String),
 }
 
+/// Hover actions on a tile. Built-in presets cannot be edited or deleted, so they get Open instead.
+#[derive(Clone, Copy)]
+enum TileOp {
+    Apply,
+    Open,
+    Edit,
+    Duplicate,
+    Export,
+    Delete,
+}
+
+fn tile_ops(builtin: bool) -> Vec<(TileOp, Icon, &'static str)> {
+    let mut ops = vec![(TileOp::Apply, Icon::Check, "Apply")];
+    if builtin {
+        ops.push((TileOp::Open, Icon::Editor, "Open in editor"));
+    } else {
+        ops.push((TileOp::Edit, Icon::Edit, "Edit"));
+    }
+    ops.push((TileOp::Duplicate, Icon::Copy, "Duplicate"));
+    ops.push((TileOp::Export, Icon::Download, "Export"));
+    if !builtin {
+        ops.push((TileOp::Delete, Icon::Trash, "Delete"));
+    }
+    ops
+}
+
+fn into_action(op: TileOp, id: String) -> Action {
+    match op {
+        TileOp::Apply => Action::Apply(id),
+        TileOp::Open => Action::Open(id),
+        TileOp::Edit => Action::Edit(id),
+        TileOp::Duplicate => Action::Duplicate(id),
+        TileOp::Export => Action::Export(id),
+        TileOp::Delete => Action::Delete(id),
+    }
+}
+
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     let memory_id = ui.scope_id().with("presets_page_state");
     let mut pu: PresetsUi = ui.data(|d| d.get_temp(memory_id)).unwrap_or_default();
 
     toolbar(ui, state, &mut pu);
     ui.add_space(8.0);
-    category_chips(ui, state, &mut pu);
+    filter_chips(ui, state, &mut pu);
     ui.add_space(12.0);
 
     let mut actions = Vec::new();
@@ -223,13 +322,9 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
 
 fn toolbar(ui: &mut egui::Ui, state: &mut AppState, pu: &mut PresetsUi) {
     ui.horizontal_wrapped(|ui| {
-        ui.add(
-            egui::TextEdit::singleline(&mut pu.query)
-                .hint_text("Search by name")
-                .desired_width(220.0),
-        );
-        ui.toggle_value(&mut pu.favorites_only, "Favorites only");
-        ui.add_space(8.0);
+        ui.allocate_ui(Vec2::new(280.0, BUTTON_HEIGHT), |ui| {
+            search_field(ui, &mut pu.query, "Search presets");
+        });
         if secondary_button(ui, "New from current").clicked() {
             let mut preset = Preset {
                 name: format!("Crosshair {}", state.presets.len() + 1),
@@ -248,8 +343,7 @@ fn toolbar(ui: &mut egui::Ui, state: &mut AppState, pu: &mut PresetsUi) {
                 PathPrompt::new("Import presets", false, FileKind::Json, "", String::new()),
             ));
         }
-        let can_export = !state.presets.is_empty();
-        if ui.add_enabled(can_export, egui::Button::new("Export all")).clicked() {
+        if button_if(ui, !state.presets.is_empty(), secondary_button, "Export all") {
             let content = export_collection(&state.presets);
             pu.prompt = Some((
                 Transfer::Export,
@@ -265,191 +359,232 @@ fn toolbar(ui: &mut egui::Ui, state: &mut AppState, pu: &mut PresetsUi) {
     });
 }
 
-fn category_chips(ui: &mut egui::Ui, state: &AppState, pu: &mut PresetsUi) {
+/// Filter chips: All, Favorites, then one per category in the library.
+fn filter_chips(ui: &mut egui::Ui, state: &AppState, pu: &mut PresetsUi) {
     let cats = categories(&state.presets);
     ui.horizontal_wrapped(|ui| {
-        if ui.selectable_label(pu.category.is_none(), "All").clicked() {
-            pu.category = None;
+        if chip(ui, "All", pu.filter == Filter::All) {
+            pu.filter = Filter::All;
         }
-        for cat in &cats {
-            let selected = pu.category.as_deref() == Some(cat.as_str());
-            if ui.selectable_label(selected, cat).clicked() {
-                pu.category = if selected { None } else { Some(cat.clone()) };
+        if chip(ui, "Favorites", pu.filter == Filter::Favorites) {
+            pu.filter = Filter::Favorites;
+        }
+        for cat in cats {
+            let selected = pu.filter == Filter::Category(cat.clone());
+            if chip(ui, &cat, selected) {
+                pu.filter = Filter::Category(cat);
             }
         }
     });
 }
 
+fn chip(ui: &mut egui::Ui, label: &str, selected: bool) -> bool {
+    if selected {
+        primary_button(ui, label).clicked()
+    } else {
+        ghost_button(ui, label).clicked()
+    }
+}
+
 fn grid(ui: &mut egui::Ui, state: &AppState, pu: &PresetsUi, actions: &mut Vec<Action>) {
     if state.presets.is_empty() {
-        ui.label(muted(
-            "No presets yet. Save a crosshair from the editor or import a file.",
-        ));
+        empty_state(
+            ui,
+            "No presets yet",
+            "Save a crosshair from the editor or import a file.",
+        );
         return;
     }
     let query = pu.query.trim().to_lowercase();
     let visible: Vec<&Preset> = state
         .presets
         .iter()
-        .filter(|p| !pu.favorites_only || p.favorite)
-        .filter(|p| pu.category.as_ref().is_none_or(|c| &p.category == c))
-        .filter(|p| {
-            query.is_empty() || p.name.to_lowercase().contains(&query) || p.category.to_lowercase().contains(&query)
-        })
+        .filter(|p| matches_filter(p, &pu.filter) && matches_query(p, &query))
         .collect();
     if visible.is_empty() {
-        ui.label(muted("No presets match the current filters."));
+        empty_state(ui, "No matches", "Change the search or the filter to see more presets.");
         return;
     }
+
+    let active = state.settings.active_preset_id.as_deref();
+    let cols = grid_columns(ui.available_width(), CARD_W, CARD_GAP);
+    let row_gap = (CARD_GAP - ui.spacing().item_spacing.y).max(0.0);
     egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-        ui.horizontal_wrapped(|ui| {
-            ui.spacing_mut().item_spacing = Vec2::splat(16.0);
-            for p in visible {
-                card(ui, p, actions);
-            }
-        });
+        for row in visible.chunks(cols) {
+            ui.horizontal(|ui| {
+                ui.spacing_mut().item_spacing.x = CARD_GAP;
+                for p in row {
+                    card(ui, p, active == Some(p.id.as_str()), actions);
+                }
+            });
+            ui.add_space(row_gap);
+        }
     });
 }
 
-fn card(ui: &mut egui::Ui, p: &Preset, actions: &mut Vec<Action>) {
-    let (rect, resp) = ui.allocate_exact_size(Vec2::new(CARD_W, CARD_H), Sense::click());
-    let hovered = ui.rect_contains_pointer(rect);
-    let painter = ui.painter_at(rect);
-    let border = if hovered { BLUE } else { BORDER };
-    painter.rect_filled(rect, CornerRadius::same(12), SURFACE);
-    painter.rect_stroke(
-        rect,
-        CornerRadius::same(12),
-        Stroke::new(1.0, border),
-        StrokeKind::Inside,
-    );
+/// One preset tile. The tile is allocated once at a fixed size; everything inside is painted into
+/// fixed rects, so hovering never changes the layout of the grid.
+fn card(ui: &mut egui::Ui, p: &Preset, active: bool, actions: &mut Vec<Action>) {
+    let pal = theme::palette(ui.ctx());
+    let (tile, resp) = ui.allocate_exact_size(Vec2::new(CARD_W, CARD_H), Sense::click());
+    let resp = resp.on_hover_cursor(CursorIcon::PointingHand);
+    if !ui.is_rect_visible(tile) {
+        return;
+    }
+    let hovered = ui.rect_contains_pointer(tile);
+    let painter = ui.painter().clone();
 
-    let tile = Rect::from_min_size(rect.min + Vec2::splat(8.0), Vec2::new(CARD_W - 16.0, TILE_H - 8.0));
-    painter.rect_filled(tile, CornerRadius::same(8), theme::PREVIEW_DARK);
-    let bounds = p.crosshair.bounding_size() as f32;
-    let zoom = (88.0 / bounds).clamp(0.5, 3.0);
-    paint_crosshair(
-        ui,
-        Rect::from_center_size(tile.center(), Vec2::splat(bounds * zoom)),
-        &p.crosshair,
-        zoom,
-    );
-
-    let text_x = rect.left() + 12.0;
-    let base_y = tile.bottom() + 10.0;
-    painter.text(
-        Pos2::new(text_x, base_y),
-        Align2::LEFT_TOP,
-        &p.name,
-        FontId::proportional(14.0),
-        TEXT,
-    );
-    let meta = if p.builtin {
-        format!("{} · Built-in", p.category)
+    let border = if active {
+        Stroke::new(2.0, pal.accent)
+    } else if hovered {
+        Stroke::new(1.0, pal.accent)
     } else {
-        p.category.clone()
+        Stroke::new(1.0, pal.border)
     };
-    painter.text(
-        Pos2::new(text_x, base_y + 22.0),
-        Align2::LEFT_TOP,
-        meta,
-        FontId::proportional(12.0),
-        TEXT2,
+    painter.rect_filled(tile, CARD_RADIUS, pal.surface);
+    painter.rect_stroke(tile, CARD_RADIUS, border, StrokeKind::Inside);
+
+    // Dark preview thumbnail, scaled so the whole crosshair fits the 76 px square inside it.
+    let thumb = Rect::from_min_size(tile.min + Vec2::splat(8.0), Vec2::new(CARD_W - 16.0, THUMB_H));
+    let bounds = p.crosshair.bounding_size() as f32;
+    preview_scene_box(
+        ui,
+        thumb,
+        PreviewScene::Dark,
+        &p.crosshair,
+        (76.0 / bounds).clamp(0.1, 3.0),
     );
 
-    // Favorite star, top-right of the tile.
-    let star_rect = Rect::from_min_size(Pos2::new(tile.right() - 28.0, tile.top() + 6.0), Vec2::splat(22.0));
-    let star = ui.interact(star_rect, ui.scope_id().with(("preset_fav", &p.id)), Sense::click());
-    draw_star(&painter, star_rect.center(), 8.5, p.favorite, star.hovered());
-    if star.clicked() {
+    let name_pos = Pos2::new(tile.left() + 12.0, thumb.bottom() + 10.0);
+    painter.text(
+        name_pos,
+        Align2::LEFT_TOP,
+        ellipsize(&p.name, 20),
+        FontId::new(14.0, FontFamily::Name("semibold".into())),
+        pal.text,
+    );
+    let meta_pos = Pos2::new(name_pos.x, name_pos.y + 22.0);
+    let category = ellipsize(p.category.trim(), 12);
+    let meta_font = FontId::proportional(12.0);
+    let category_w = painter
+        .layout_no_wrap(category.clone(), meta_font.clone(), pal.text_muted)
+        .size()
+        .x;
+    painter.text(meta_pos, Align2::LEFT_TOP, &category, meta_font, pal.text_muted);
+    if p.builtin {
+        paint_badge(
+            &painter,
+            Pos2::new(meta_pos.x + category_w + 8.0, meta_pos.y),
+            "Built-in",
+            pal,
+        );
+    }
+
+    // Favorite star on a small surface chip, top-right of the thumbnail. Its own click area.
+    let star_c = Pos2::new(thumb.right() - 16.0, thumb.top() + 16.0);
+    let star = ui
+        .interact(
+            Rect::from_center_size(star_c, Vec2::splat(STAR_SIZE)),
+            ui.scope_id().with(("preset_fav", p.id.as_str())),
+            Sense::click(),
+        )
+        .on_hover_cursor(CursorIcon::PointingHand)
+        .on_hover_text(if p.favorite {
+            "Remove from favorites"
+        } else {
+            "Add to favorites"
+        });
+    let star_color = if p.favorite {
+        pal.warning
+    } else if star.hovered() {
+        pal.text
+    } else {
+        pal.text_muted
+    };
+    painter.circle_filled(star_c, STAR_SIZE / 2.0, pal.surface);
+    painter.circle_stroke(star_c, STAR_SIZE / 2.0, Stroke::new(1.0, pal.border));
+    paint_icon(
+        &painter,
+        Rect::from_center_size(star_c, Vec2::splat(14.0)),
+        Icon::Star { filled: p.favorite },
+        star_color,
+    );
+
+    // Hover actions exist only while the pointer is over the tile, in a fixed bottom row.
+    let ops = tile_ops(p.builtin);
+    let clicked_op = if hovered {
+        action_row(ui, &painter, tile, &p.id, &ops, pal)
+    } else {
+        None
+    };
+    if let Some(op) = clicked_op {
+        actions.push(into_action(op, p.id.clone()));
+    } else if star.clicked() {
         actions.push(Action::Favorite(p.id.clone()));
     } else if resp.clicked() {
         actions.push(Action::Apply(p.id.clone()));
     }
-
-    if hovered {
-        painter.rect_filled(tile, CornerRadius::same(8), Color32::from_black_alpha(175));
-        let c = tile.center();
-        let row1 = Rect::from_min_size(Pos2::new(tile.left() + 4.0, c.y - 30.0), Vec2::new(96.0, 26.0));
-        let row1b = Rect::from_min_size(Pos2::new(tile.left() + 104.0, c.y - 30.0), Vec2::new(96.0, 26.0));
-        let row2_y = c.y + 4.0;
-        let row2 = [
-            Rect::from_min_size(Pos2::new(tile.left() + 4.0, row2_y), Vec2::new(62.0, 26.0)),
-            Rect::from_min_size(Pos2::new(tile.left() + 70.0, row2_y), Vec2::new(62.0, 26.0)),
-            Rect::from_min_size(Pos2::new(tile.left() + 136.0, row2_y), Vec2::new(62.0, 26.0)),
-        ];
-        let id = p.id.clone();
-        if action_button(ui, row1, "Apply", true, true) {
-            actions.push(Action::Apply(id.clone()));
-        }
-        let second = if p.builtin { "Open" } else { "Edit" };
-        if action_button(ui, row1b, second, true, false) {
-            actions.push(if p.builtin {
-                Action::Open(id.clone())
-            } else {
-                Action::Edit(id.clone())
-            });
-        }
-        if action_button(ui, row2[0], "Duplicate", true, false) {
-            actions.push(Action::Duplicate(id.clone()));
-        }
-        if action_button(ui, row2[1], "Export", true, false) {
-            actions.push(Action::Export(id.clone()));
-        }
-        if action_button(ui, row2[2], "Delete", !p.builtin, false) {
-            actions.push(Action::Delete(id));
-        }
-    }
 }
 
-fn action_button(ui: &mut egui::Ui, rect: Rect, label: &str, enabled: bool, primary: bool) -> bool {
-    let text = egui::RichText::new(label).size(12.0);
-    let text = if primary {
-        text.strong().color(Color32::WHITE)
-    } else {
-        text.color(TEXT)
-    };
-    let fill = if primary { BLUE } else { SURFACE };
-    ui.add_enabled_ui(enabled, |ui| {
-        ui.put(
-            rect,
-            egui::Button::new(text)
-                .fill(fill)
-                .stroke(Stroke::new(1.0, BORDER))
-                .corner_radius(CornerRadius::same(6))
-                .min_size(rect.size()),
-        )
-        .clicked()
-    })
-    .inner
+/// Small pill with the accent soft background, centered vertically on `pos`.
+fn paint_badge(painter: &egui::Painter, pos: Pos2, text: &str, pal: &Palette) {
+    let font = FontId::new(11.0, FontFamily::Name("semibold".into()));
+    let text_w = painter
+        .layout_no_wrap(text.to_owned(), font.clone(), pal.primary)
+        .size()
+        .x;
+    let rect = Rect::from_min_size(Pos2::new(pos.x, pos.y - 3.0), Vec2::new(text_w + 12.0, 18.0));
+    painter.rect_filled(rect, INPUT_RADIUS, pal.accent_soft);
+    painter.text(rect.center(), Align2::CENTER_CENTER, text, font, pal.primary);
 }
 
-fn draw_star(painter: &egui::Painter, center: Pos2, radius: f32, filled: bool, hovered: bool) {
-    let mut points = Vec::with_capacity(10);
-    for i in 0..10 {
-        let r = if i % 2 == 0 { radius } else { radius * 0.42 };
-        let a = -std::f32::consts::FRAC_PI_2 + i as f32 * std::f32::consts::PI / 5.0;
-        points.push(center + Vec2::new(a.cos(), a.sin()) * r);
-    }
-    let color = if filled {
-        BLUE
-    } else if hovered {
-        TEXT
-    } else {
-        TEXT2
-    };
-    if filled {
-        // Fan of convex triangles from the center; a concave star cannot be filled directly.
-        for i in 0..10 {
-            let a = points[i];
-            let b = points[(i + 1) % 10];
-            painter.add(egui::Shape::convex_polygon(vec![center, a, b], color, Stroke::NONE));
+/// Paints the action row at the bottom of `tile` and returns the operation clicked this frame.
+fn action_row(
+    ui: &mut egui::Ui,
+    painter: &egui::Painter,
+    tile: Rect,
+    id: &str,
+    ops: &[(TileOp, Icon, &'static str)],
+    pal: &Palette,
+) -> Option<TileOp> {
+    let row = Rect::from_min_max(Pos2::new(tile.left(), tile.bottom() - ACTION_ROW_H), tile.max);
+    painter.rect_filled(
+        row,
+        CornerRadius {
+            nw: 0,
+            ne: 0,
+            sw: CARD_RADIUS,
+            se: CARD_RADIUS,
+        },
+        pal.surface_alt,
+    );
+    painter.line_segment([row.left_top(), row.right_top()], Stroke::new(1.0, pal.border));
+
+    let n = ops.len() as f32;
+    let total = n * ACTION_SIZE + (n - 1.0) * ACTION_GAP;
+    let mut x = tile.center().x - total / 2.0;
+    let y = row.center().y - ACTION_SIZE / 2.0;
+    let mut clicked = None;
+    for (i, (op, icon, tip)) in ops.iter().enumerate() {
+        let r = Rect::from_min_size(Pos2::new(x, y), Vec2::splat(ACTION_SIZE));
+        x += ACTION_SIZE + ACTION_GAP;
+        let resp = ui
+            .interact(r, ui.scope_id().with(("preset_op", id, i)), Sense::click())
+            .on_hover_cursor(CursorIcon::PointingHand)
+            .on_hover_text(*tip);
+        let (fill, color) = if resp.hovered() {
+            (pal.accent_soft, pal.primary)
+        } else {
+            (pal.surface, pal.text_muted)
+        };
+        painter.rect_filled(r, INPUT_RADIUS, fill);
+        painter.rect_stroke(r, INPUT_RADIUS, Stroke::new(1.0, pal.border), StrokeKind::Inside);
+        paint_icon(painter, r.shrink(6.0), *icon, color);
+        if resp.clicked() && clicked.is_none() {
+            clicked = Some(*op);
         }
-    } else {
-        let mut closed = points.clone();
-        closed.push(points[0]);
-        painter.add(egui::Shape::line(closed, Stroke::new(1.4, color)));
     }
+    clicked
 }
 
 fn open_in_editor(state: &mut AppState, preset: &Preset) {
@@ -643,20 +778,20 @@ fn meta_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut PresetsUi) {
         .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
         .show(ctx, |ui| {
             ui.set_width(340.0);
-            ui.label(muted("Name"));
+            caption(ui, "Name");
             ui.add(egui::TextEdit::singleline(&mut form.name).desired_width(340.0));
             ui.add_space(6.0);
-            ui.label(muted("Category"));
+            caption(ui, "Category");
             ui.add(egui::TextEdit::singleline(&mut form.category).desired_width(340.0));
             ui.horizontal_wrapped(|ui| {
                 for cat in &categories {
-                    if ui.small_button(cat).clicked() {
+                    if ghost_button(ui, cat).clicked() {
                         form.category = cat.clone();
                     }
                 }
             });
             ui.add_space(6.0);
-            ui.label(muted("Description (optional)"));
+            caption(ui, "Description (optional)");
             ui.add(
                 egui::TextEdit::multiline(&mut form.description)
                     .desired_rows(3)
@@ -665,13 +800,13 @@ fn meta_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut PresetsUi) {
             ui.add_space(10.0);
             ui.horizontal(|ui| {
                 let valid = !form.name.trim().is_empty();
-                if ui.add_enabled(valid, egui::Button::new("Save")).clicked() {
+                if button_if(ui, valid, primary_button, "Save") {
                     save = true;
                 }
                 if secondary_button(ui, "Open in editor").clicked() {
                     open_editor = true;
                 }
-                if ui.button("Cancel").clicked() {
+                if secondary_button(ui, "Cancel").clicked() {
                     cancel = true;
                 }
             });
@@ -736,5 +871,54 @@ mod tests {
         assert_eq!(file_name_for("Tight Cross!"), "tight-cross.json");
         assert_eq!(file_name_for("  ../../etc  "), "etc.json");
         assert_eq!(file_name_for("***"), "crosshair.json");
+    }
+
+    #[test]
+    fn grid_columns_follow_the_formula() {
+        // One card exactly fits; a second needs 2 * 176 + 16 = 368 px.
+        assert_eq!(grid_columns(176.0, CARD_W, CARD_GAP), 1);
+        assert_eq!(grid_columns(368.0, CARD_W, CARD_GAP), 2);
+        assert_eq!(grid_columns(367.0, CARD_W, CARD_GAP), 1);
+        assert_eq!(grid_columns(900.0, CARD_W, CARD_GAP), 4);
+        assert_eq!(grid_columns(10.0, CARD_W, CARD_GAP), 1);
+        assert_eq!(grid_columns(f32::NAN, CARD_W, CARD_GAP), 1);
+    }
+
+    #[test]
+    fn ellipsize_keeps_short_text_and_cuts_long_text() {
+        assert_eq!(ellipsize("Tight", 20), "Tight");
+        assert_eq!(ellipsize("abcdefghij", 10), "abcdefghij");
+        assert_eq!(ellipsize("abcdefghijk", 10), "abcdefg...");
+        assert_eq!(ellipsize("abcdef", 2), "...");
+    }
+
+    #[test]
+    fn filters_match_favorites_category_and_query() {
+        let mut fav = preset("Glow", "Pro");
+        fav.favorite = true;
+        assert!(matches_filter(&fav, &Filter::Favorites));
+        assert!(!matches_filter(&preset("Plain", "Pro"), &Filter::Favorites));
+        assert!(matches_filter(
+            &preset("Plain", " Pro "),
+            &Filter::Category("Pro".into())
+        ));
+        assert!(!matches_filter(
+            &preset("Plain", "Classic"),
+            &Filter::Category("Pro".into())
+        ));
+        assert!(matches_query(&fav, ""));
+        assert!(matches_query(&fav, "glo"));
+        assert!(matches_query(&fav, "pr"));
+        assert!(!matches_query(&fav, "zzz"));
+    }
+
+    #[test]
+    fn built_in_tiles_offer_open_and_no_delete() {
+        let builtin: Vec<TileOp> = tile_ops(true).into_iter().map(|(op, _, _)| op).collect();
+        assert!(builtin.iter().any(|op| matches!(op, TileOp::Open)));
+        assert!(!builtin.iter().any(|op| matches!(op, TileOp::Delete)));
+        let custom: Vec<TileOp> = tile_ops(false).into_iter().map(|(op, _, _)| op).collect();
+        assert!(custom.iter().any(|op| matches!(op, TileOp::Delete)));
+        assert!(custom.iter().any(|op| matches!(op, TileOp::Edit)));
     }
 }

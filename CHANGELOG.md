@@ -7,6 +7,23 @@ and this project uses [Semantic Versioning](https://semver.org/spec/v2.0.0.html)
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-11-13
+
+### Changed
+- Complete visual redesign: warm cream and light-grey surfaces with light-blue accents and dark-blue primary actions, plus a matching dark theme. Switch from the title bar or Settings; light is the default.
+- Serif headings (Source Serif 4) with Inter body text, both SIL OFL 1.1, bundled in the app.
+- Custom title bar with window controls and resize edges. Settings has an option to use the Windows title bar instead (restart required).
+- Crosshair Editor rebuilt: shape picker, collapsible Geometry / Colour / Outline / Elements / Position sections with aligned sliders, a fixed preview and an always-visible action bar.
+- Presets library uses fixed-size tiles; hovering a tile no longer moves the others.
+- Buttons are centred and consistently sized across the app.
+- Overview, Game Profiles and Settings pages redesigned.
+
+### Added
+- First-run welcome flow (existing users skip it).
+- 22 new original built-in presets (38 in total), including Dynamic, Outline only and Soft categories.
+- Light and dark preview backgrounds, independent of the app theme.
+- Settings file version 2 with automatic migration from v0.1.x.
+
 ## [0.1.1] - 2026-11-13
 
 ### Fixed

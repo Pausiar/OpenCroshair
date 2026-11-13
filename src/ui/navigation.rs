@@ -1,8 +1,9 @@
-//! Left sidebar: app name, page navigation with vector icons, overlay status at the bottom.
+//! Left sidebar (220 px): serif wordmark, page navigation, and at the bottom the overlay status
+//! pill with a quick switch. Colors come from the active [`theme::Palette`].
 use crate::state::{AppState, Page};
-use crate::ui::theme::{self, BLUE, BLUE_LIGHT, BLUE_TINT, SURFACE2, TEXT, TEXT2};
+use crate::ui::theme;
 use crate::ui::widgets::{self, Icon};
-use eframe::egui::{self, Align, Align2, Color32, FontId, Layout, Rect, Response, Sense, Ui, Vec2};
+use eframe::egui::{self, Align, Layout, Margin, RichText, Sense, Stroke, Ui, Vec2};
 
 const ITEMS: [(Page, &str, Icon); 5] = [
     (Page::Overview, "Overview", Icon::Overview),
@@ -12,95 +13,75 @@ const ITEMS: [(Page, &str, Icon); 5] = [
     (Page::Settings, "Settings", Icon::Settings),
 ];
 
-/// Draw the sidebar contents (call inside a left panel).
+/// Draw the sidebar contents (call inside a left panel with a surface fill).
 pub fn show(ui: &mut Ui, state: &mut AppState) {
-    ui.add_space(10.0);
-    ui.horizontal(|ui| {
-        ui.add_space(8.0);
-        egui::Frame::new()
-            .fill(BLUE)
-            .corner_radius(theme::RADIUS_SM)
-            .inner_margin(egui::Margin::same(5))
-            .show(ui, |ui| {
-                widgets::icon(ui, Icon::Editor, 16.0, Color32::WHITE);
-            });
-        ui.add_space(4.0);
-        ui.label(egui::RichText::new("OpenCrosshair").size(16.0).strong().color(TEXT));
-    });
-    ui.add_space(22.0);
+    paint_right_border(ui);
+    wordmark(ui);
+    ui.add_space(20.0);
 
     for (page, label, icon) in ITEMS {
-        let active = state.page == page;
-        if nav_item(ui, label, icon, active).clicked() {
+        let selected = state.page == page;
+        if widgets::nav_item(ui, icon, label, selected).clicked() {
             state.page = page;
         }
         ui.add_space(2.0);
     }
 
     ui.with_layout(Layout::bottom_up(Align::Min), |ui| {
-        ui.add_space(12.0);
-        overlay_status(ui, state);
-        ui.add_space(8.0);
+        overlay_card(ui, state);
     });
 }
 
-fn nav_item(ui: &mut Ui, label: &str, icon: Icon, active: bool) -> Response {
-    let (rect, resp) = ui.allocate_exact_size(Vec2::new(ui.available_width(), 36.0), Sense::click());
-    let resp = resp.on_hover_cursor(egui::CursorIcon::PointingHand);
-    if ui.is_rect_visible(rect) {
-        let hovered = resp.hovered();
-        let p = ui.painter();
-        let bg = if active {
-            BLUE_TINT
-        } else if hovered {
-            SURFACE2
-        } else {
-            Color32::TRANSPARENT
-        };
-        p.rect_filled(rect, theme::RADIUS_SM, bg);
-        if active {
-            let bar = Rect::from_min_size(rect.left_top() + Vec2::new(0.0, 8.0), Vec2::new(3.0, 20.0));
-            p.rect_filled(bar, 2.0, BLUE);
-        }
-        let (icon_color, text_color) = if active {
-            (BLUE_LIGHT, BLUE_LIGHT)
-        } else if hovered {
-            (TEXT, TEXT)
-        } else {
-            (TEXT2, TEXT2)
-        };
-        let icon_rect = Rect::from_min_size(rect.left_top() + Vec2::new(14.0, 8.0), Vec2::splat(20.0));
-        widgets::paint_icon(p, icon_rect, icon, icon_color);
-        p.text(
-            rect.left_top() + Vec2::new(44.0, 18.0),
-            Align2::LEFT_CENTER,
-            label,
-            FontId::proportional(14.0),
-            text_color,
-        );
-    }
-    resp
+/// 1 px divider on the sidebar's right edge.
+fn paint_right_border(ui: &Ui) {
+    let p = theme::palette(ui.ctx());
+    let rect = ui.clip_rect();
+    ui.painter()
+        .vline(rect.right() - 0.5, rect.y_range(), Stroke::new(1.0, p.border));
 }
 
-fn overlay_status(ui: &mut Ui, state: &AppState) {
+/// Small logo mark followed by the serif app name.
+fn wordmark(ui: &mut Ui) {
+    let p = theme::palette(ui.ctx());
+    ui.add_space(4.0);
+    ui.horizontal(|ui| {
+        let (logo, _) = ui.allocate_exact_size(Vec2::splat(26.0), Sense::hover());
+        if ui.is_rect_visible(logo) {
+            ui.painter().rect_filled(logo, 7.0, p.primary);
+            widgets::paint_icon(ui.painter(), logo.shrink(5.0), Icon::Editor, p.on_primary);
+        }
+        ui.add_space(8.0);
+        ui.label(widgets::heading_text("OpenCrosshair", 19.0).color(p.text));
+    });
+}
+
+/// Overlay status pill plus a quick switch that turns the overlay on or off.
+fn overlay_card(ui: &mut Ui, state: &mut AppState) {
+    let p = theme::palette(ui.ctx());
     let (text, color) = if !state.settings.overlay_enabled {
-        ("Overlay off", TEXT2)
+        ("Overlay off", p.text_muted)
     } else if !state.settings.crosshair_visible {
-        ("Crosshair hidden", theme::DANGER)
+        ("Crosshair hidden", p.danger)
     } else {
-        ("Overlay active", theme::SUCCESS)
+        ("Overlay active", p.success)
     };
     egui::Frame::new()
-        .fill(theme::SURFACE)
-        .stroke(egui::Stroke::new(1.0, theme::BORDER))
+        .fill(p.surface_alt)
+        .stroke(Stroke::new(1.0, p.border))
         .corner_radius(theme::RADIUS_SM)
-        .inner_margin(egui::Margin::symmetric(12, 9))
+        .inner_margin(Margin::symmetric(12, 10))
         .show(ui, |ui| {
             ui.set_width(ui.available_width());
+            widgets::status_pill(ui, text, color);
+            ui.add_space(6.0);
             ui.horizontal(|ui| {
-                let (dot, _) = ui.allocate_exact_size(Vec2::splat(9.0), Sense::hover());
-                ui.painter().circle_filled(dot.center(), 4.0, color);
-                ui.label(egui::RichText::new(text).size(13.0).color(TEXT));
+                ui.label(RichText::new("Overlay").size(14.0).color(p.text));
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    let mut on = state.settings.overlay_enabled;
+                    if widgets::toggle_switch(ui, &mut on).changed() {
+                        state.set_overlay_enabled(on);
+                    }
+                });
             });
         });
 }
