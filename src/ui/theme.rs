@@ -201,38 +201,6 @@ pub fn apply(ctx: &egui::Context, mode: ThemeMode) {
     });
 }
 
-// Legacy dark tokens. They are kept so pages not yet migrated to `Palette` still compile and
-// render with the old look. Remove them once every page reads colors through `palette(ctx)`.
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const BG: Color32 = Color32::from_rgb(0x10, 0x13, 0x18);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const SURFACE: Color32 = Color32::from_rgb(0x18, 0x1D, 0x25);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const SURFACE2: Color32 = Color32::from_rgb(0x20, 0x27, 0x35);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const BORDER: Color32 = Color32::from_rgb(0x2A, 0x33, 0x40);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const BLUE: Color32 = Color32::from_rgb(0x3B, 0x82, 0xF6);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const BLUE_LIGHT: Color32 = Color32::from_rgb(0x60, 0xA5, 0xFA);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const TEXT: Color32 = Color32::from_rgb(0xF1, 0xF5, 0xF9);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const TEXT2: Color32 = Color32::from_rgb(0x94, 0xA3, 0xB8);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const SUCCESS: Color32 = Color32::from_rgb(0x27, 0xD9, 0x80);
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const DANGER: Color32 = Color32::from_rgb(0xF8, 0x71, 0x71);
-/// Tinted accent background for selected rows (blue at low alpha).
-#[allow(dead_code)] // Legacy dark value; removed when pages migrate to Palette.
-pub const BLUE_TINT: Color32 = Color32::from_rgba_premultiplied(0x1E, 0x3A, 0x6B, 0xFF);
-/// Light preview background used when "light" preview is chosen.
-#[allow(dead_code)] // Legacy preview value; removed when pages migrate to Palette.
-pub const PREVIEW_LIGHT: Color32 = Color32::from_rgb(0xE5, 0xE7, 0xEB);
-/// Dark preview background used for the crosshair preview.
-#[allow(dead_code)] // Legacy preview value; removed when pages migrate to Palette.
-pub const PREVIEW_DARK: Color32 = Color32::from_rgb(0x0B, 0x0E, 0x13);
-
 #[cfg(test)]
 mod tests {
     use super::*;

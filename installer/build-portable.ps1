@@ -38,6 +38,9 @@ New-Item -ItemType Directory -Path $staging | Out-Null
 try {
     Copy-Item -LiteralPath $exe -Destination $staging
     Copy-Item -LiteralPath $license -Destination $staging
+    $licensesDir = Join-Path $staging 'licenses'
+    New-Item -ItemType Directory -Path $licensesDir | Out-Null
+    Copy-Item -Path (Join-Path $root 'assets\fonts\OFL-*.txt') -Destination $licensesDir
     Copy-Item -LiteralPath $readme -Destination $staging
 
     if (Test-Path -LiteralPath $zip) {
