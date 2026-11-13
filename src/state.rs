@@ -41,6 +41,14 @@ impl AppState {
     pub fn toast(&mut self, msg: impl Into<String>, error: bool) {
         self.status = Some((msg.into(), error));
     }
+    /// Turn the overlay on or off, push the new state to the overlay thread and mark settings dirty.
+    pub fn set_overlay_enabled(&mut self, on: bool) {
+        if self.settings.overlay_enabled != on {
+            self.settings.overlay_enabled = on;
+            self.push_overlay();
+            self.dirty = true;
+        }
+    }
     /// Push the active crosshair + position + visibility to the overlay thread.
     pub fn push_overlay(&self) {
         self.overlay.send(OverlayCommand::Update {

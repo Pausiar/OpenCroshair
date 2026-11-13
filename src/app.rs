@@ -5,11 +5,14 @@ use crate::overlay::OverlayHandle;
 use crate::profiles::detection::{DetectionEvent, Detector};
 use crate::profiles::manager::{Resolution, resolve_preset_id};
 use crate::state::{AppState, Page};
-use crate::storage::config::{LoadedData, Paths, SaveJob, SaveWorker};
+use crate::storage::config::{LoadedData, Paths, SaveJob, SaveWorker, ThemeMode};
 use crate::system::startup;
 use crate::system::tray::{Tray, TrayEvent};
+use crate::ui::titlebar::{self, TitleBarAction};
 use crate::ui::{dashboard, editor, navigation, presets, profiles, settings, theme, widgets};
-use eframe::egui::{self, Align2, Color32, Frame, Margin, Order, RichText, Stroke, ViewportCommand};
+use eframe::egui::{
+    self, Align2, Color32, CornerRadius, Frame, Margin, Order, Pos2, Rect, RichText, Shadow, Stroke, ViewportCommand,
+};
 use std::collections::VecDeque;
 use std::time::{Duration, Instant};
 
@@ -68,6 +71,8 @@ pub struct App {
     active_profile_id: Option<String>,
     /// Last (crosshair_visible, overlay_enabled) pushed to the tray.
     tray_states: Option<(bool, bool)>,
+    /// Theme mode last installed on the egui context (compared with `settings.theme` each frame).
+    applied_theme: ThemeMode,
     quitting: bool,
     pending_toasts: VecDeque<(String, bool)>,
     /// Toast currently shown, with the time it first appeared.
@@ -143,6 +148,7 @@ impl App {
             interval_applied: settings.detection_interval_ms,
             active_profile_id: None,
             tray_states: None,
+            applied_theme: settings.theme,
             quitting: false,
             pending_toasts,
             toast_seen: None,
@@ -337,6 +343,30 @@ impl App {
         }
     }
 
+    /// Install the theme on the context when `settings.theme` differs from the applied mode.
+    /// Covers the title bar toggle and the Settings page alike; a change marks settings dirty.
+    fn sync_theme(&mut self, ctx: &egui::Context) {
+        if self.applied_theme != self.state.settings.theme {
+            self.applied_theme = self.state.settings.theme;
+            theme::apply(ctx, self.applied_theme);
+            self.state.dirty = true;
+        }
+    }
+
+    /// Apply a title bar request. Close goes through the window's close request, so close-to-tray
+    /// and the quit path behave exactly as for the system close button.
+    fn apply_titlebar_action(&mut self, ctx: &egui::Context, action: TitleBarAction) {
+        match action {
+            TitleBarAction::None | TitleBarAction::ToggleTheme => {}
+            TitleBarAction::Minimize => ctx.send_viewport_cmd(ViewportCommand::Minimized(true)),
+            TitleBarAction::ToggleMaximize => {
+                let maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
+                ctx.send_viewport_cmd(ViewportCommand::Maximized(!maximized));
+            }
+            TitleBarAction::Close => ctx.send_viewport_cmd(ViewportCommand::Close),
+        }
+    }
+
     fn apply_pending_hotkeys(&mut self) {
         if self.state.hotkeys_changed {
             self.state.hotkeys_changed = false;
@@ -431,34 +461,49 @@ impl App {
         let Some((msg, is_error)) = self.state.status.clone() else {
             return;
         };
-        let accent = if is_error { theme::DANGER } else { theme::BLUE_LIGHT };
+        let p = theme::palette(ctx);
+        let accent = if is_error { p.danger } else { p.accent };
         let mut dismiss = false;
         egui::Area::new(widgets::state_id("oc_toast"))
             .anchor(Align2::RIGHT_BOTTOM, egui::vec2(-24.0, -20.0))
             .order(Order::Foreground)
             .show(ctx, |ui| {
-                Frame::new()
-                    .fill(theme::SURFACE2)
-                    .stroke(Stroke::new(1.0, accent.gamma_multiply(0.7)))
+                let shadow_alpha = if ui.visuals().dark_mode { 110 } else { 28 };
+                let out = Frame::new()
+                    .fill(p.surface)
+                    .stroke(Stroke::new(1.0, p.border))
                     .corner_radius(theme::RADIUS)
-                    .inner_margin(Margin::symmetric(14, 10))
-                    .shadow(egui::Shadow {
+                    .inner_margin(Margin {
+                        left: 18,
+                        right: 12,
+                        top: 10,
+                        bottom: 10,
+                    })
+                    .shadow(Shadow {
                         offset: [0, 4],
                         blur: 16,
                         spread: 0,
-                        color: Color32::from_black_alpha(90),
+                        color: Color32::from_black_alpha(shadow_alpha),
                     })
                     .show(ui, |ui| {
                         ui.set_max_width(440.0);
                         ui.horizontal(|ui| {
-                            let (dot, _) = ui.allocate_exact_size(egui::vec2(8.0, 8.0), egui::Sense::hover());
-                            ui.painter().circle_filled(dot.center(), 4.0, accent);
-                            ui.label(RichText::new(&msg).color(theme::TEXT));
-                            if ui.small_button("Dismiss").clicked() {
+                            ui.label(RichText::new(&msg).color(p.text));
+                            if widgets::ghost_button(ui, "Dismiss").clicked() {
                                 dismiss = true;
                             }
                         });
                     });
+                // Accent stripe along the left edge, following the card's rounded corners.
+                let r = out.response.rect;
+                let stripe = Rect::from_min_max(r.left_top(), Pos2::new(r.left() + 4.0, r.bottom()));
+                let corners = CornerRadius {
+                    nw: 8,
+                    sw: 8,
+                    ne: 0,
+                    se: 0,
+                };
+                ui.painter().rect_filled(stripe, corners, accent);
             });
         if dismiss {
             self.state.status = None;
@@ -511,26 +556,49 @@ impl eframe::App for App {
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
         let ctx = ui.ctx().clone();
 
-        egui::Panel::left("oc_sidebar")
-            .exact_size(220.0)
-            .resizable(false)
-            .frame(
-                Frame::new()
-                    .fill(theme::SURFACE)
-                    .inner_margin(Margin::symmetric(12, 12)),
-            )
-            .show(ui, |ui| navigation::show(ui, &mut self.state));
+        self.sync_theme(&ctx);
+        let custom_bar = !self.state.settings.use_system_title_bar;
 
-        egui::CentralPanel::default()
-            .frame(Frame::new().fill(theme::BG).inner_margin(Margin::symmetric(28, 22)))
-            .show(ui, |ui| match self.state.page {
-                Page::Overview => dashboard::show(ui, &mut self.state),
-                Page::Editor => editor::show(ui, &mut self.state),
-                Page::Presets => presets::show(ui, &mut self.state),
-                Page::Profiles => profiles::show(ui, &mut self.state),
-                Page::Settings => settings::show(ui, &mut self.state),
-            });
+        if custom_bar {
+            let maximized = ctx.input(|i| i.viewport().maximized.unwrap_or(false));
+            let action = titlebar::show_ui(ui, &mut self.state.settings.theme, maximized);
+            self.sync_theme(&ctx);
+            self.apply_titlebar_action(&ctx, action);
+        }
 
+        if self.state.settings.onboarding_done {
+            egui::Panel::left("oc_sidebar")
+                .exact_size(220.0)
+                .resizable(false)
+                .frame(
+                    Frame::new()
+                        .fill(theme::palette(&ctx).surface)
+                        .inner_margin(Margin::symmetric(14, 16)),
+                )
+                .show(ui, |ui| navigation::show(ui, &mut self.state));
+
+            egui::CentralPanel::default()
+                .frame(
+                    Frame::new()
+                        .fill(theme::palette(&ctx).bg)
+                        .inner_margin(Margin::symmetric(28, 22)),
+                )
+                .show(ui, |ui| match self.state.page {
+                    Page::Overview => dashboard::show(ui, &mut self.state),
+                    Page::Editor => editor::show(ui, &mut self.state),
+                    Page::Presets => presets::show(ui, &mut self.state),
+                    Page::Profiles => profiles::show(ui, &mut self.state),
+                    Page::Settings => settings::show(ui, &mut self.state),
+                });
+        } else {
+            egui::CentralPanel::default()
+                .frame(Frame::new().fill(theme::palette(&ctx).bg))
+                .show(ui, |ui| crate::ui::onboarding::show(ui, &mut self.state));
+        }
+
+        if custom_bar {
+            titlebar::resize_handles(&ctx);
+        }
         self.draw_toast(&ctx);
     }
 
