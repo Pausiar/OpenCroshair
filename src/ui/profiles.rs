@@ -1,39 +1,64 @@
-//! Game profiles page: per-game crosshair assignments, automatic switching and the default crosshair.
+//! Game profiles page. A list of profiles on the left and the detail/edit form of the selected
+//! profile on the right. Above them: a card with the automatic switching toggle and the default
+//! crosshair. Adding a profile opens the same form in the right-hand panel.
 use crate::crosshair::model::Preset;
 use crate::profiles::GameProfile;
 use crate::profiles::detection::list_running_processes;
 use crate::profiles::manager::{add_profile, normalize_exe, remove_profile, update_profile};
 use crate::state::AppState;
-use crate::ui::presets::{self, CAN_BROWSE, FileKind, muted};
-use crate::ui::theme::{self, BLUE_LIGHT, BORDER, DANGER, SUCCESS, SURFACE, TEXT, TEXT2};
-use crate::ui::widgets::{
-    danger_button, page_header, paint_crosshair, primary_button, secondary_button, status_pill, toggle_row,
+use crate::ui::presets::{self, CAN_BROWSE, FileKind};
+use crate::ui::theme::{self, Palette};
+use crate::ui::widgets::{self, PreviewScene};
+use eframe::egui::{
+    self, Align, Align2, Color32, FontId, Layout, Rect, RichText, Sense, Stroke, StrokeKind, UiBuilder, Vec2,
 };
-use eframe::egui::{self, Align, Align2, Color32, CornerRadius, Layout, Margin, Rect, RichText, Sense, Stroke, Vec2};
 
-/// Add/edit dialog state. `id` is None while adding.
+/// Width of the profile list column.
+const LIST_W: f32 = 300.0;
+/// Space between the list and the detail column.
+const COLUMN_GAP: f32 = 16.0;
+/// Height the profile list may use before it scrolls.
+const LIST_MAX_H: f32 = 560.0;
+/// Height of one profile row.
+const ROW_H: f32 = 88.0;
+const ROW_PAD_X: f32 = 12.0;
+const ROW_PAD_Y: f32 = 10.0;
+/// Square preview of a crosshair inside a row.
+const TILE: f32 = 40.0;
+/// Square preview of the selected preset in the detail form.
+const PREVIEW_SIZE: f32 = 96.0;
+
+/// Detail/edit form. `id` is None while adding a new profile.
 #[derive(Clone, Default)]
 struct ProfileForm {
     id: Option<String>,
     name: String,
     exe: String,
     preset_id: Option<String>,
-    enabled: bool,
     error: Option<String>,
     /// Running applications as (file name, full path), shown while the picker is open.
     running: Option<Vec<(String, String)>>,
 }
 
-#[derive(Clone, Default)]
-struct ProfilesUi {
-    form: Option<ProfileForm>,
-    delete: Option<String>,
+impl ProfileForm {
+    fn for_profile(p: &GameProfile) -> Self {
+        Self {
+            id: Some(p.id.clone()),
+            name: p.name.clone(),
+            exe: p.exe.clone(),
+            preset_id: p.preset_id.clone(),
+            ..Self::default()
+        }
+    }
 }
 
-enum Action {
-    Use(String),
-    Edit(String),
-    Delete(String),
+/// Page memory kept between frames.
+#[derive(Clone, Default)]
+struct ProfilesUi {
+    /// Form of the selected profile, or of a new profile. None when nothing is open.
+    form: Option<ProfileForm>,
+    /// Id of the profile whose deletion awaits confirmation.
+    delete: Option<String>,
 }
 
 pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
@@ -42,18 +67,16 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
 
     ui.horizontal(|ui| {
         ui.vertical(|ui| {
-            page_header(
+            widgets::page_header(
                 ui,
                 "Game profiles",
                 "Assign a crosshair to each game. Profiles apply while the game is in focus.",
-            )
+            );
         });
         ui.with_layout(Layout::right_to_left(Align::TOP), |ui| {
-            if primary_button(ui, "Add profile").clicked() {
-                pu.form = Some(ProfileForm {
-                    enabled: true,
-                    ..ProfileForm::default()
-                });
+            if widgets::primary_button(ui, "Add profile").clicked() {
+                pu.form = Some(ProfileForm::default());
+                pu.delete = None;
             }
         });
     });
@@ -61,32 +84,43 @@ pub fn show(ui: &mut egui::Ui, state: &mut AppState) {
     switching_card(ui, state);
     ui.add_space(14.0);
 
-    let mut actions = Vec::new();
-    profile_list(ui, state, &mut actions);
-    for action in actions {
-        handle_action(state, &mut pu, action);
+    let selected = pu.form.as_ref().and_then(|f| f.id.clone());
+    let mut clicked: Option<String> = None;
+    ui.horizontal_top(|ui| {
+        let spacing = ui.spacing().item_spacing.x;
+        let detail_w = (ui.available_width() - LIST_W - COLUMN_GAP - 2.0 * spacing).max(0.0);
+        ui.vertical(|ui| {
+            ui.set_width(LIST_W);
+            clicked = profile_list(ui, state, selected.as_deref());
+        });
+        ui.add_space(COLUMN_GAP);
+        ui.vertical(|ui| {
+            ui.set_width(detail_w);
+            detail_panel(ui, state, &mut pu);
+        });
+    });
+
+    if let Some(id) = clicked
+        && pu.form.as_ref().and_then(|f| f.id.as_deref()) != Some(id.as_str())
+        && let Some(profile) = state.profiles.iter().find(|p| p.id == id)
+    {
+        pu.form = Some(ProfileForm::for_profile(profile));
+        pu.delete = None;
     }
 
-    dialogs(ui.ctx(), state, &mut pu);
     ui.data_mut(|d| d.insert_temp(memory_id, pu));
 }
 
-fn card(ui: &mut egui::Ui, add: impl FnOnce(&mut egui::Ui)) {
-    egui::Frame::new()
-        .fill(SURFACE)
-        .stroke(Stroke::new(1.0, BORDER))
-        .corner_radius(theme::RADIUS)
-        .inner_margin(Margin::same(14))
-        .show(ui, |ui| {
-            ui.set_width(ui.available_width());
-            add(ui);
-        });
+fn field_label(ui: &mut egui::Ui, text: &str) {
+    let p = theme::palette(ui.ctx());
+    ui.label(RichText::new(text).size(13.0).color(p.text_muted));
 }
 
 fn switching_card(ui: &mut egui::Ui, state: &mut AppState) {
-    card(ui, |ui| {
+    let p = theme::palette(ui.ctx());
+    widgets::card(ui, |ui| {
         let mut auto = state.settings.auto_profiles;
-        if toggle_row(
+        if widgets::toggle_row(
             ui,
             "Switch crosshairs automatically",
             Some("Apply a profile's crosshair when its game comes to the foreground."),
@@ -102,25 +136,29 @@ fn switching_card(ui: &mut egui::Ui, state: &mut AppState) {
             state.toast(msg, false);
         }
 
-        ui.add_space(10.0);
-        ui.label(RichText::new("Default crosshair").size(14.0).color(TEXT));
-        ui.label(muted(
-            "Used when a profile's game leaves focus, and when no profile matches after a game was active.",
-        ));
-        ui.add_space(4.0);
+        ui.add_space(12.0);
+        ui.label(RichText::new("Default crosshair").size(14.0).color(p.text));
+        ui.label(
+            RichText::new(
+                "Used when a profile's game leaves focus, and when no profile matches after a game was active.",
+            )
+            .size(12.0)
+            .color(p.text_muted),
+        );
+        ui.add_space(6.0);
         let current = state.settings.default_profile_preset_id.clone();
         let selected_name = current
             .as_deref()
-            .and_then(|id| state.presets.iter().find(|p| p.id == id))
-            .map_or("None (keep current crosshair)".to_string(), |p| p.name.clone());
+            .and_then(|id| state.presets.iter().find(|pr| pr.id == id))
+            .map_or("None (keep current crosshair)".to_string(), |pr| pr.name.clone());
         let mut chosen = current.clone();
         egui::ComboBox::from_id_salt("default_profile_preset")
             .selected_text(selected_name)
             .width(280.0)
             .show_ui(ui, |ui| {
                 ui.selectable_value(&mut chosen, None, "None (keep current crosshair)");
-                for p in &state.presets {
-                    ui.selectable_value(&mut chosen, Some(p.id.clone()), &p.name);
+                for pr in &state.presets {
+                    ui.selectable_value(&mut chosen, Some(pr.id.clone()), &pr.name);
                 }
             });
         if chosen != current {
@@ -130,347 +168,437 @@ fn switching_card(ui: &mut egui::Ui, state: &mut AppState) {
     });
 }
 
-/// Status shown for one profile: reflects the auto-switch setting and whether it is active now.
-fn status_for(state: &AppState, p: &GameProfile) -> (&'static str, Color32) {
+/// Status of one profile: whether auto-switching is on and whether this profile is active now.
+fn status_for(state: &AppState, profile: &GameProfile, p: &Palette) -> (&'static str, Color32) {
     if !state.settings.auto_profiles {
-        ("Auto-switch off", TEXT2)
-    } else if !p.enabled {
-        ("Disabled", TEXT2)
-    } else if state.active_profile.as_deref() == Some(p.name.as_str()) {
-        ("Active", SUCCESS)
+        ("Auto-switch off", p.text_muted)
+    } else if !profile.enabled {
+        ("Disabled", p.text_muted)
+    } else if state.active_profile.as_deref() == Some(profile.name.as_str()) {
+        ("Active", p.success)
     } else {
-        ("Watching", BLUE_LIGHT)
+        ("Watching", p.primary)
     }
 }
 
-fn profile_list(ui: &mut egui::Ui, state: &mut AppState, actions: &mut Vec<Action>) {
+/// Left column. Returns the id of a row that was clicked this frame.
+fn profile_list(ui: &mut egui::Ui, state: &mut AppState, selected: Option<&str>) -> Option<String> {
     if state.profiles.is_empty() {
-        card(ui, |ui| {
-            ui.label(RichText::new("No profiles yet").size(15.0).strong().color(TEXT));
-            ui.label(muted("Add a game by its executable to give it its own crosshair."));
-        });
-        return;
+        widgets::empty_state(
+            ui,
+            "No profiles yet",
+            "Add a game by its executable to give it its own crosshair.",
+        );
+        return None;
     }
-    egui::ScrollArea::vertical().auto_shrink([false, false]).show(ui, |ui| {
-        for i in 0..state.profiles.len() {
-            let p = state.profiles[i].clone();
-            profile_row(ui, state, i, &p, actions);
-            ui.add_space(8.0);
-        }
-    });
+    let mut clicked = None;
+    egui::ScrollArea::vertical()
+        .max_height(LIST_MAX_H)
+        .auto_shrink([false, true])
+        .show(ui, |ui| {
+            for index in 0..state.profiles.len() {
+                let profile = state.profiles[index].clone();
+                let is_selected = selected == Some(profile.id.as_str());
+                if profile_row(ui, state, index, &profile, is_selected) {
+                    clicked = Some(profile.id.clone());
+                }
+                ui.add_space(8.0);
+            }
+        });
+    clicked
 }
 
-fn profile_row(ui: &mut egui::Ui, state: &mut AppState, index: usize, p: &GameProfile, actions: &mut Vec<Action>) {
-    let preset: Option<Preset> = p
+/// One profile row fixed at `ROW_H`. The row is registered before its contents, so the enable
+/// switch takes clicks on its own area and the rest of the row selects the profile. Returns true
+/// when the row body was clicked.
+fn profile_row(ui: &mut egui::Ui, state: &mut AppState, index: usize, profile: &GameProfile, selected: bool) -> bool {
+    let p = theme::palette(ui.ctx());
+    let preset: Option<Preset> = profile
         .preset_id
         .as_deref()
-        .and_then(|id| state.presets.iter().find(|pr| pr.id == id).cloned());
-    let (status_text, status_color) = status_for(state, p);
-
-    card(ui, |ui| {
-        ui.horizontal(|ui| {
-            // Preview tile with the assigned crosshair.
-            let (tile, _) = ui.allocate_exact_size(Vec2::splat(56.0), Sense::hover());
-            ui.painter()
-                .rect_filled(tile, CornerRadius::same(8), theme::PREVIEW_DARK);
-            match &preset {
-                Some(pr) => {
-                    let bounds = pr.crosshair.bounding_size() as f32;
-                    let zoom = (44.0 / bounds).clamp(0.5, 2.0);
-                    paint_crosshair(
-                        ui,
-                        Rect::from_center_size(tile.center(), Vec2::splat(bounds * zoom)),
-                        &pr.crosshair,
-                        zoom,
-                    );
-                }
-                None => {
-                    ui.painter().text(
-                        tile.center(),
-                        Align2::CENTER_CENTER,
-                        "None",
-                        egui::FontId::proportional(11.0),
-                        TEXT2,
-                    );
-                }
-            }
-
-            ui.add_space(10.0);
-            ui.vertical(|ui| {
-                ui.label(RichText::new(&p.name).size(15.0).strong().color(TEXT));
-                ui.label(RichText::new(&p.exe).size(12.0).monospace().color(TEXT2));
-                let assigned = match &preset {
-                    Some(pr) => format!("Crosshair: {}", pr.name),
-                    None if p.preset_id.is_some() => "Crosshair: preset was deleted".to_string(),
-                    None => "No crosshair assigned".to_string(),
-                };
-                ui.label(RichText::new(assigned).size(12.0).color(TEXT2));
-            });
-
-            ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
-                if danger_button(ui, "Delete").clicked() {
-                    actions.push(Action::Delete(p.id.clone()));
-                }
-                if secondary_button(ui, "Edit").clicked() {
-                    actions.push(Action::Edit(p.id.clone()));
-                }
-                if secondary_button(ui, "Use now").clicked() {
-                    actions.push(Action::Use(p.id.clone()));
-                }
-                let mut enabled = p.enabled;
-                if ui.checkbox(&mut enabled, "Enabled").changed() {
-                    state.profiles[index].enabled = enabled;
-                    state.dirty = true;
-                }
-                status_pill(ui, status_text, status_color);
-            });
-        });
-    });
-}
-
-fn handle_action(state: &mut AppState, pu: &mut ProfilesUi, action: Action) {
-    match action {
-        Action::Use(id) => {
-            let Some(p) = state.profiles.iter().find(|p| p.id == id).cloned() else {
-                return;
-            };
-            let Some(preset_id) = p.preset_id.clone() else {
-                state.toast(
-                    format!(
-                        "\"{}\" has no crosshair assigned. Edit the profile to choose one.",
-                        p.name
-                    ),
-                    true,
-                );
-                return;
-            };
-            if !state.presets.iter().any(|pr| pr.id == preset_id) {
-                state.toast(
-                    format!("The crosshair for \"{}\" no longer exists. Edit the profile.", p.name),
-                    true,
-                );
-                return;
-            }
-            state.apply_preset(&preset_id);
-            state.active_profile = Some(p.name.clone());
-            state.toast(format!("Using the crosshair for \"{}\".", p.name), false);
-        }
-        Action::Edit(id) => {
-            if let Some(p) = state.profiles.iter().find(|p| p.id == id) {
-                pu.form = Some(ProfileForm {
-                    id: Some(p.id.clone()),
-                    name: p.name.clone(),
-                    exe: p.exe.clone(),
-                    preset_id: p.preset_id.clone(),
-                    enabled: p.enabled,
-                    error: None,
-                    running: None,
-                });
-            }
-        }
-        Action::Delete(id) => pu.delete = Some(id),
-    }
-}
-
-fn dialogs(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
-    form_dialog(ctx, state, pu);
-    delete_dialog(ctx, state, pu);
-}
-
-/// File stem of an executable name, used as the default profile name ("cs2.exe" -> "cs2").
-fn stem_of(exe: &str) -> String {
-    exe.strip_suffix(".exe").unwrap_or(exe).to_string()
-}
-
-fn form_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
-    let Some(mut form) = pu.form.take() else { return };
-    let title = if form.id.is_some() {
-        "Edit profile"
-    } else {
-        "Add profile"
+        .and_then(|id| state.presets.iter().find(|pr| pr.id == id))
+        .cloned();
+    let (status_text, status_color) = status_for(state, profile, p);
+    let assigned = match &preset {
+        Some(pr) => format!("Crosshair: {}", pr.name),
+        None if profile.preset_id.is_some() => "Crosshair: preset was deleted".to_string(),
+        None => "No crosshair assigned".to_string(),
     };
-    let presets_list: Vec<(String, String)> = state.presets.iter().map(|p| (p.id.clone(), p.name.clone())).collect();
-    let mut open = true;
-    let mut save = false;
-    let mut cancel = false;
 
-    egui::Window::new(title)
-        .collapsible(false)
-        .resizable(false)
-        .open(&mut open)
-        .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
-        .show(ctx, |ui| {
-            ui.set_width(440.0);
-            ui.label(muted("Name"));
-            ui.add(
-                egui::TextEdit::singleline(&mut form.name)
-                    .hint_text("e.g. Counter-Strike 2")
-                    .desired_width(440.0),
-            );
+    let rect = Rect::from_min_size(ui.cursor().min, Vec2::new(ui.available_width(), ROW_H));
+    let resp = ui
+        .interact(
+            rect,
+            ui.scope_id().with(("oc_profile_row", profile.id.as_str())),
+            Sense::click(),
+        )
+        .on_hover_cursor(egui::CursorIcon::PointingHand);
+    let (fill, border) = if selected {
+        (p.accent_soft, p.accent)
+    } else if resp.hovered() {
+        (p.surface_alt, p.border)
+    } else {
+        (p.surface, p.border)
+    };
+    ui.painter().rect_filled(rect, 10, fill);
+    ui.painter()
+        .rect_stroke(rect, 10, Stroke::new(1.0, border), StrokeKind::Inside);
 
-            ui.add_space(6.0);
-            ui.label(muted("Executable"));
-            ui.horizontal(|ui| {
-                let width = if CAN_BROWSE { 330.0 } else { 440.0 };
-                ui.add(
-                    egui::TextEdit::singleline(&mut form.exe)
-                        .hint_text("cs2.exe")
-                        .desired_width(width),
-                );
-                let browse = CAN_BROWSE && secondary_button(ui, "Browse...").clicked();
-                if let Some(path) = browse.then(|| presets::pick_path(FileKind::Exe, false, "")).flatten() {
-                    let exe = normalize_exe(&path.display().to_string());
-                    if form.name.trim().is_empty() {
-                        form.name = stem_of(&exe);
+    let mut enabled = profile.enabled;
+    let mut toggled = false;
+    ui.scope_builder(
+        UiBuilder::new().max_rect(rect.shrink2(Vec2::new(ROW_PAD_X, ROW_PAD_Y))),
+        |ui| {
+            ui.set_min_height(ROW_H - 2.0 * ROW_PAD_Y);
+            ui.horizontal_top(|ui| {
+                let (tile, _) = ui.allocate_exact_size(Vec2::splat(TILE), Sense::hover());
+                match &preset {
+                    Some(pr) => widgets::preview_scene_box(ui, tile, PreviewScene::Dark, &pr.crosshair, 2.0),
+                    None => {
+                        ui.painter().rect_filled(tile, 6, p.surface_alt);
+                        ui.painter()
+                            .rect_stroke(tile, 6, Stroke::new(1.0, p.border), StrokeKind::Inside);
+                        ui.painter().text(
+                            tile.center(),
+                            Align2::CENTER_CENTER,
+                            "None",
+                            FontId::proportional(11.0),
+                            p.text_muted,
+                        );
                     }
-                    form.exe = exe;
-                    form.error = None;
                 }
-            });
-            ui.add_space(4.0);
-            let picker_open = form.running.is_some();
-            if secondary_button(
-                ui,
-                if picker_open {
-                    "Hide running apps"
-                } else {
-                    "Pick from running apps"
-                },
-            )
-            .clicked()
-            {
-                form.running = if picker_open {
-                    None
-                } else {
-                    let mut list: Vec<(String, String)> =
-                        list_running_processes().into_iter().map(|r| (r.name, r.path)).collect();
-                    list.sort();
-                    list.dedup_by(|a, b| a.0 == b.0);
-                    Some(list)
-                };
-            }
-            if let Some(list) = form.running.clone() {
-                egui::ScrollArea::vertical()
-                    .max_height(170.0)
-                    .auto_shrink([false, true])
-                    .show(ui, |ui| {
-                        if list.is_empty() {
-                            ui.label(muted("No running applications found."));
-                        }
-                        for (name, path) in &list {
-                            if ui.selectable_label(false, name).on_hover_text(path).clicked() {
-                                if form.name.trim().is_empty() {
-                                    form.name = stem_of(name);
-                                }
-                                form.exe = name.clone();
-                                form.running = None;
-                                form.error = None;
-                                break;
-                            }
-                        }
+                ui.add_space(10.0);
+                ui.vertical(|ui| {
+                    ui.spacing_mut().item_spacing.y = 4.0;
+                    ui.horizontal(|ui| {
+                        ui.add(
+                            egui::Label::new(RichText::new(&profile.name).size(14.0).strong().color(p.text)).truncate(),
+                        );
+                        ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                            toggled = widgets::toggle_switch(ui, &mut enabled).changed();
+                        });
                     });
-            }
+                    ui.label(RichText::new(&profile.exe).size(12.0).monospace().color(p.text_muted));
+                    ui.horizontal(|ui| {
+                        ui.add(egui::Label::new(RichText::new(&assigned).size(12.0).color(p.text_muted)).truncate());
+                        widgets::status_pill(ui, status_text, status_color);
+                    });
+                });
+            });
+        },
+    );
 
-            ui.add_space(6.0);
-            ui.label(muted("Crosshair"));
-            let selected = form
-                .preset_id
-                .as_ref()
-                .and_then(|id| presets_list.iter().find(|(pid, _)| pid == id))
-                .map_or("None".to_string(), |(_, n)| n.clone());
+    if toggled {
+        state.profiles[index].enabled = enabled;
+        state.dirty = true;
+    }
+    resp.clicked() && !toggled
+}
+
+/// Right column: the form of the selected or new profile, with its actions.
+fn detail_panel(ui: &mut egui::Ui, state: &mut AppState, pu: &mut ProfilesUi) {
+    let p = theme::palette(ui.ctx());
+    let Some(mut form) = pu.form.take() else {
+        widgets::card(ui, |ui| {
+            ui.label(widgets::heading_text("No profile selected", 17.0));
+            ui.add_space(4.0);
+            ui.label(
+                RichText::new("Select a profile to edit it, or add one for a game.")
+                    .size(13.0)
+                    .color(p.text_muted),
+            );
+        });
+        return;
+    };
+
+    let editing_id = form.id.clone();
+    let saved = editing_id
+        .as_deref()
+        .and_then(|id| state.profiles.iter().find(|pr| pr.id == id))
+        .map(|pr| (pr.name.clone(), pr.preset_id.clone()));
+    let confirming = editing_id.is_some() && pu.delete == editing_id;
+
+    let mut closed = false;
+    let mut save = false;
+    let mut use_now = false;
+    let mut ask_delete = false;
+    let mut confirm_delete = false;
+    let mut keep = false;
+
+    widgets::card(ui, |ui| {
+        let title = if editing_id.is_some() {
+            "Edit profile"
+        } else {
+            "New profile"
+        };
+        ui.label(widgets::heading_text(title, 17.0));
+        ui.add_space(10.0);
+
+        field_label(ui, "Name");
+        let width = ui.available_width();
+        ui.add(
+            egui::TextEdit::singleline(&mut form.name)
+                .hint_text("e.g. Counter-Strike 2")
+                .desired_width(width),
+        );
+        ui.add_space(8.0);
+
+        field_label(ui, "Executable");
+        ui.horizontal(|ui| {
+            let browse_w = if CAN_BROWSE { 110.0 } else { 0.0 };
+            let width = (ui.available_width() - browse_w).max(120.0);
+            ui.add(
+                egui::TextEdit::singleline(&mut form.exe)
+                    .hint_text("cs2.exe")
+                    .desired_width(width),
+            );
+            if CAN_BROWSE
+                && widgets::secondary_button(ui, "Browse...").clicked()
+                && let Some(path) = presets::pick_path(FileKind::Exe, false, "")
+            {
+                let exe = normalize_exe(&path.display().to_string());
+                if form.name.trim().is_empty() {
+                    form.name = stem_of(&exe);
+                }
+                form.exe = exe;
+                form.error = None;
+            }
+        });
+        ui.add_space(6.0);
+
+        let picker_open = form.running.is_some();
+        let picker_label = if picker_open {
+            "Hide running apps"
+        } else {
+            "Pick from running apps"
+        };
+        if widgets::secondary_button(ui, picker_label).clicked() {
+            form.running = if picker_open { None } else { Some(running_apps()) };
+        }
+        if let Some(list) = form.running.clone() {
+            egui::ScrollArea::vertical()
+                .max_height(160.0)
+                .auto_shrink([false, true])
+                .show(ui, |ui| {
+                    if list.is_empty() {
+                        ui.label(
+                            RichText::new("No running applications found.")
+                                .size(12.0)
+                                .color(p.text_muted),
+                        );
+                    }
+                    for (name, path) in &list {
+                        if ui.selectable_label(false, name).on_hover_text(path).clicked() {
+                            if form.name.trim().is_empty() {
+                                form.name = stem_of(name);
+                            }
+                            form.exe = name.clone();
+                            form.running = None;
+                            form.error = None;
+                            break;
+                        }
+                    }
+                });
+        }
+        ui.add_space(8.0);
+
+        field_label(ui, "Crosshair");
+        let selected_name = form
+            .preset_id
+            .as_deref()
+            .and_then(|id| state.presets.iter().find(|pr| pr.id == id))
+            .map_or("None".to_string(), |pr| pr.name.clone());
+        ui.horizontal_top(|ui| {
             egui::ComboBox::from_id_salt("profile_form_preset")
-                .selected_text(selected)
-                .width(440.0)
+                .selected_text(selected_name)
+                .width(240.0)
                 .show_ui(ui, |ui| {
                     ui.selectable_value(&mut form.preset_id, None, "None");
-                    for (pid, name) in &presets_list {
-                        ui.selectable_value(&mut form.preset_id, Some(pid.clone()), name);
+                    for pr in &state.presets {
+                        ui.selectable_value(&mut form.preset_id, Some(pr.id.clone()), &pr.name);
                     }
                 });
-
-            if let Some(err) = &form.error {
-                ui.add_space(6.0);
-                ui.label(RichText::new(err).size(12.0).color(DANGER));
+            let chosen = form
+                .preset_id
+                .as_deref()
+                .and_then(|id| state.presets.iter().find(|pr| pr.id == id));
+            let (rect, _) = ui.allocate_exact_size(Vec2::splat(PREVIEW_SIZE), Sense::hover());
+            match chosen {
+                Some(pr) => widgets::preview_scene_box(ui, rect, PreviewScene::Dark, &pr.crosshair, 4.0),
+                None => {
+                    ui.painter().rect_filled(rect, 6, p.surface_alt);
+                    ui.painter().text(
+                        rect.center(),
+                        Align2::CENTER_CENTER,
+                        "No crosshair",
+                        FontId::proportional(12.0),
+                        p.text_muted,
+                    );
+                }
             }
-            ui.add_space(10.0);
-            ui.horizontal(|ui| {
-                if primary_button(ui, "Save").clicked() {
-                    save = true;
-                }
-                if secondary_button(ui, "Cancel").clicked() {
-                    cancel = true;
-                }
-            });
         });
 
-    if save {
-        let preset_id = form.preset_id.clone();
-        let result = match form.id.clone() {
-            None => add_profile(&mut state.profiles, &form.name, &form.exe, preset_id).map(|_| "Profile added."),
-            Some(id) => update_profile(&mut state.profiles, &id, &form.name, &form.exe, preset_id, form.enabled)
-                .map(|()| "Profile saved."),
-        };
-        match result {
-            Ok(msg) => {
-                state.dirty = true;
-                state.toast(msg, false);
-                return;
-            }
-            Err(e) => form.error = Some(e.to_string()),
+        if let Some(err) = &form.error {
+            ui.add_space(6.0);
+            ui.label(RichText::new(err).size(12.0).color(p.danger));
         }
-    }
-    if cancel || !open {
-        return;
-    }
-    pu.form = Some(form);
-}
+        ui.add_space(12.0);
 
-fn delete_dialog(ctx: &egui::Context, state: &mut AppState, pu: &mut ProfilesUi) {
-    let Some(id) = pu.delete.clone() else { return };
-    let name = state
-        .profiles
-        .iter()
-        .find(|p| p.id == id)
-        .map(|p| p.name.clone())
-        .unwrap_or_default();
-    let mut open = true;
-    let mut confirmed = false;
-    let mut cancelled = false;
-    egui::Window::new("Delete profile?")
-        .collapsible(false)
-        .resizable(false)
-        .open(&mut open)
-        .anchor(Align2::CENTER_CENTER, Vec2::ZERO)
-        .show(ctx, |ui| {
-            ui.set_width(320.0);
-            ui.label(format!(
-                "\"{name}\" will be removed. Its game will no longer switch crosshairs."
-            ));
-            ui.add_space(10.0);
+        ui.horizontal(|ui| {
+            if widgets::primary_button(ui, "Save").clicked() {
+                save = true;
+            }
+            if widgets::secondary_button(ui, "Cancel").clicked() {
+                closed = true;
+            }
+            if editing_id.is_some() {
+                let has_preset = saved.as_ref().is_some_and(|(_, preset)| preset.is_some());
+                ui.add_enabled_ui(has_preset, |ui| {
+                    if widgets::secondary_button(ui, "Use now").clicked() {
+                        use_now = true;
+                    }
+                });
+                ui.with_layout(Layout::right_to_left(Align::Center), |ui| {
+                    if !confirming && widgets::danger_button(ui, "Delete").clicked() {
+                        ask_delete = true;
+                    }
+                });
+            }
+        });
+
+        if confirming {
+            ui.add_space(12.0);
+            let name = saved.as_ref().map(|(n, _)| n.as_str()).unwrap_or_default();
+            ui.label(
+                RichText::new(format!(
+                    "\"{name}\" will be removed. Its game will no longer switch crosshairs."
+                ))
+                .size(13.0)
+                .color(p.text),
+            );
+            ui.add_space(6.0);
             ui.horizontal(|ui| {
-                if danger_button(ui, "Delete").clicked() {
-                    confirmed = true;
+                if widgets::danger_button(ui, "Delete profile").clicked() {
+                    confirm_delete = true;
                 }
-                if secondary_button(ui, "Cancel").clicked() {
-                    cancelled = true;
+                if widgets::secondary_button(ui, "Keep profile").clicked() {
+                    keep = true;
                 }
             });
-        });
-    if confirmed {
-        match remove_profile(&mut state.profiles, &id) {
+        }
+    });
+
+    if ask_delete {
+        pu.delete = editing_id.clone();
+    }
+    if keep {
+        pu.delete = None;
+    }
+    if use_now && let Some(id) = editing_id.as_deref() {
+        use_profile(state, id);
+    }
+    if confirm_delete && let Some(id) = editing_id.as_deref() {
+        match remove_profile(&mut state.profiles, id) {
             Ok(removed) => {
                 if state.active_profile.as_deref() == Some(removed.name.as_str()) {
                     state.active_profile = None;
                 }
                 state.dirty = true;
                 state.toast(format!("Deleted profile \"{}\".", removed.name), false);
+                pu.delete = None;
+                closed = true;
             }
             Err(e) => state.toast(e.to_string(), true),
         }
     }
-    if confirmed || cancelled || !open {
-        pu.delete = None;
+    if save {
+        let before = editing_id
+            .as_ref()
+            .and_then(|id| state.profiles.iter().find(|pr| &pr.id == id))
+            .map(|pr| (pr.name.clone(), pr.enabled));
+        let result = match editing_id.as_deref() {
+            None => add_profile(&mut state.profiles, &form.name, &form.exe, form.preset_id.clone())
+                .map(|id| (id, "Profile added.")),
+            Some(id) => {
+                let enabled = before.as_ref().is_none_or(|(_, enabled)| *enabled);
+                update_profile(
+                    &mut state.profiles,
+                    id,
+                    &form.name,
+                    &form.exe,
+                    form.preset_id.clone(),
+                    enabled,
+                )
+                .map(|()| (id.to_string(), "Profile saved."))
+            }
+        };
+        match result {
+            Ok((id, msg)) => {
+                if let Some((old_name, _)) = &before
+                    && state.active_profile.as_deref() == Some(old_name.as_str())
+                    && let Some(renamed) = state.profiles.iter().find(|pr| pr.id == id)
+                {
+                    state.active_profile = Some(renamed.name.clone());
+                }
+                state.dirty = true;
+                state.toast(msg, false);
+                // Keep the saved profile open so its normalized values are visible.
+                if let Some(saved_profile) = state.profiles.iter().find(|pr| pr.id == id) {
+                    form = ProfileForm::for_profile(saved_profile);
+                }
+            }
+            Err(e) => form.error = Some(e.to_string()),
+        }
     }
+
+    if closed {
+        pu.delete = None;
+    } else {
+        pu.form = Some(form);
+    }
+}
+
+/// Applies the crosshair of a saved profile and marks it as the active profile.
+fn use_profile(state: &mut AppState, id: &str) {
+    let Some(profile) = state.profiles.iter().find(|pr| pr.id == id).cloned() else {
+        return;
+    };
+    let Some(preset_id) = profile.preset_id.clone() else {
+        state.toast(
+            format!(
+                "\"{}\" has no crosshair assigned. Edit the profile to choose one.",
+                profile.name
+            ),
+            true,
+        );
+        return;
+    };
+    if !state.presets.iter().any(|pr| pr.id == preset_id) {
+        state.toast(
+            format!(
+                "The crosshair for \"{}\" no longer exists. Edit the profile.",
+                profile.name
+            ),
+            true,
+        );
+        return;
+    }
+    state.apply_preset(&preset_id);
+    state.active_profile = Some(profile.name.clone());
+    state.toast(format!("Using the crosshair for \"{}\".", profile.name), false);
+}
+
+/// Running applications as sorted, de-duplicated (file name, full path) pairs.
+fn running_apps() -> Vec<(String, String)> {
+    let mut list: Vec<(String, String)> = list_running_processes().into_iter().map(|r| (r.name, r.path)).collect();
+    list.sort();
+    list.dedup_by(|a, b| a.0 == b.0);
+    list
+}
+
+/// File stem of an executable name, used as the default profile name ("cs2.exe" -> "cs2").
+fn stem_of(exe: &str) -> String {
+    exe.strip_suffix(".exe").unwrap_or(exe).to_string()
 }
 
 #[cfg(test)]
@@ -481,5 +609,23 @@ mod tests {
     fn default_profile_name_drops_exe_suffix() {
         assert_eq!(stem_of("cs2.exe"), "cs2");
         assert_eq!(stem_of("game"), "game");
+    }
+
+    #[test]
+    fn form_for_profile_copies_saved_values() {
+        let profile = GameProfile {
+            id: "p1".into(),
+            name: "CS2".into(),
+            exe: "cs2.exe".into(),
+            preset_id: Some("preset-a".into()),
+            enabled: false,
+        };
+        let form = ProfileForm::for_profile(&profile);
+        assert_eq!(form.id.as_deref(), Some("p1"));
+        assert_eq!(form.name, "CS2");
+        assert_eq!(form.exe, "cs2.exe");
+        assert_eq!(form.preset_id.as_deref(), Some("preset-a"));
+        assert!(form.error.is_none());
+        assert!(form.running.is_none());
     }
 }
